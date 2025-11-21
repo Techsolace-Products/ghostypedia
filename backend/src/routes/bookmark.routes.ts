@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { bookmarkService } from '../services/bookmark.service';
 import { ContentType } from '../repositories/bookmark.repository';
 import { authenticateSession } from '../middleware/auth.middleware';
+import { cacheResponse } from '../middleware/cache.middleware';
+import { CacheTTL } from '../config/redis';
 
 const router = Router();
 
@@ -69,7 +71,7 @@ router.post('/', authenticateSession, async (req: Request, res: Response): Promi
  * GET /api/bookmarks
  * Get all bookmarks for the authenticated user
  */
-router.get('/', authenticateSession, async (req: Request, res: Response): Promise<void> => {
+router.get('/', authenticateSession, cacheResponse(CacheTTL.default), async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
 

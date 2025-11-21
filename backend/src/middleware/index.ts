@@ -1,2 +1,2 @@
 export { authenticateSession, optionalAuthentication } from './auth.middleware';
-export { cacheResponse } from './cache.middleware';
+export { cacheResponse, CacheInvalidation, generateCacheKey } from './cache.middleware';

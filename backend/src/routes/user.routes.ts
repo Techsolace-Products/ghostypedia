@@ -2,7 +2,9 @@ import { Router, Request, Response } from 'express';
 import { userService } from '../services/user.service';
 import { preferencesService } from '../services/preferences.service';
 import { authenticateSession } from '../middleware/auth.middleware';
+import { cacheResponse } from '../middleware/cache.middleware';
 import { PreferenceProfileUpdate } from '../repositories/preferences.repository';
+import { CacheTTL } from '../config/redis';
 
 const router = Router();
 
@@ -10,7 +12,7 @@ const router = Router();
  * GET /api/users/:userId
  * Get user profile (authenticated)
  */
-router.get('/:userId', authenticateSession, async (req: Request, res: Response): Promise<void> => {
+router.get('/:userId', authenticateSession, cacheResponse(CacheTTL.default), async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
 
@@ -65,7 +67,7 @@ router.get('/:userId', authenticateSession, async (req: Request, res: Response):
  * GET /api/users/:userId/preferences
  * Get user preferences (authenticated)
  */
-router.get('/:userId/preferences', authenticateSession, async (req: Request, res: Response): Promise<void> => {
+router.get('/:userId/preferences', authenticateSession, cacheResponse(CacheTTL.default), async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
 

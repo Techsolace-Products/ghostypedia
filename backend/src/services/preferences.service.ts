@@ -1,5 +1,6 @@
 import { preferencesRepository, PreferenceProfile, PreferenceProfileUpdate } from '../repositories/preferences.repository';
 import { cacheGet, cacheSet, cacheDelete, CacheKeys, CacheTTL } from '../config/redis';
+import { CacheInvalidation } from '../middleware/cache.middleware';
 
 export interface PreferencesService {
   getPreferences(userId: string): Promise<PreferenceProfile>;
@@ -37,6 +38,8 @@ class PreferencesServiceImpl implements PreferencesService {
    * Update preferences with validation and cache invalidation
    */
   async updatePreferences(userId: string, updates: PreferenceProfileUpdate): Promise<PreferenceProfile> {
+    const startTime = Date.now();
+
     // Validate spookiness level if provided
     if (updates.spookinessLevel !== undefined) {
       if (updates.spookinessLevel < 1 || updates.spookinessLevel > 5) {
@@ -64,8 +67,14 @@ class PreferencesServiceImpl implements PreferencesService {
     // Update in database
     const updatedPreferences = await preferencesRepository.update(userId, updates);
 
-    // Invalidate caches
+    // Invalidate caches (must complete within 1 second as per requirement 7.4)
     await this.invalidateCaches(userId);
+
+    // Verify invalidation completed within time limit
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime > 1000) {
+      console.warn(`Cache invalidation took ${elapsedTime}ms, exceeding 1 second limit`);
+    }
 
     // Store updated preferences in cache
     const cacheKey = CacheKeys.userPreferences(userId);
@@ -76,13 +85,23 @@ class PreferencesServiceImpl implements PreferencesService {
 
   /**
    * Invalidate all caches related to user preferences
+   * Must complete within 1 second (requirement 7.4)
    */
   private async invalidateCaches(userId: string): Promise<void> {
-    // Invalidate preference cache
-    await cacheDelete(CacheKeys.userPreferences(userId));
-    
-    // Invalidate recommendation cache (as per requirement 2.3)
-    await cacheDelete(CacheKeys.recommendations(userId));
+    // Run invalidations in parallel for speed
+    await Promise.all([
+      // Invalidate preference cache
+      cacheDelete(CacheKeys.userPreferences(userId)),
+      
+      // Invalidate recommendation cache (as per requirement 2.3)
+      cacheDelete(CacheKeys.recommendations(userId)),
+      
+      // Invalidate cached API responses for user preferences
+      CacheInvalidation.invalidateUserCache(userId),
+      
+      // Invalidate recommendation endpoint caches
+      CacheInvalidation.invalidateRecommendationCaches(userId),
+    ]);
   }
 }
 

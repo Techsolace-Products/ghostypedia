@@ -1,5 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
-import { cacheGet, cacheSet } from '../config/redis';
+import { cacheGet, cacheSet, cacheDelete, cacheDeletePattern } from '../config/redis';
+
+/**
+ * Generate cache key from request
+ * Includes user ID for authenticated requests to ensure user-specific caching
+ */
+export function generateCacheKey(req: Request): string {
+  const url = req.originalUrl || req.url;
+  const userId = req.user?.id;
+  
+  // Include user ID in cache key for authenticated requests
+  if (userId) {
+    return `response:user:${userId}:${url}`;
+  }
+  
+  return `response:${url}`;
+}
 
 /**
  * Response caching middleware for GET requests
@@ -14,7 +30,7 @@ export function cacheResponse(ttlSeconds: number) {
     }
 
     // Generate cache key from URL and query params
-    const cacheKey = `response:${req.originalUrl || req.url}`;
+    const cacheKey = generateCacheKey(req);
 
     try {
       // Check if response is cached
@@ -56,3 +72,66 @@ export function cacheResponse(ttlSeconds: number) {
     }
   };
 }
+
+/**
+ * Cache invalidation helpers
+ */
+export const CacheInvalidation = {
+  /**
+   * Invalidate all cached responses for a specific user
+   */
+  async invalidateUserCache(userId: string): Promise<void> {
+    const pattern = `response:user:${userId}:*`;
+    await cacheDeletePattern(pattern);
+  },
+
+  /**
+   * Invalidate cached responses for a specific endpoint pattern
+   */
+  async invalidateEndpointCache(pattern: string): Promise<void> {
+    await cacheDeletePattern(`response:*${pattern}*`);
+  },
+
+  /**
+   * Invalidate a specific cache key
+   */
+  async invalidateSpecificCache(key: string): Promise<void> {
+    await cacheDelete(key);
+  },
+
+  /**
+   * Invalidate all ghost-related caches
+   */
+  async invalidateGhostCaches(ghostId?: string): Promise<void> {
+    if (ghostId) {
+      await cacheDeletePattern(`response:*/api/ghosts/${ghostId}*`);
+    } else {
+      await cacheDeletePattern('response:*/api/ghosts*');
+    }
+  },
+
+  /**
+   * Invalidate all story-related caches
+   */
+  async invalidateStoryCaches(storyId?: string): Promise<void> {
+    if (storyId) {
+      await cacheDeletePattern(`response:*/api/stories/${storyId}*`);
+    } else {
+      await cacheDeletePattern('response:*/api/stories*');
+    }
+  },
+
+  /**
+   * Invalidate all bookmark-related caches for a user
+   */
+  async invalidateBookmarkCaches(userId: string): Promise<void> {
+    await cacheDeletePattern(`response:user:${userId}:*/api/bookmarks*`);
+  },
+
+  /**
+   * Invalidate all recommendation caches for a user
+   */
+  async invalidateRecommendationCaches(userId: string): Promise<void> {
+    await cacheDeletePattern(`response:user:${userId}:*/api/recommendations*`);
+  },
+};

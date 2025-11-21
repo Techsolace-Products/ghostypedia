@@ -358,14 +358,14 @@
   - Ensure all tests pass, ask the user if questions arise.
 
 - [-] 13. Implement caching and performance optimizations
-  - [-] 13.1 Add Redis caching middleware
+  - [x] 13.1 Add Redis caching middleware
     - Create cache middleware for GET endpoints
     - Implement cache key generation from request params
     - Add cache TTL configuration per endpoint type
     - Implement cache invalidation helpers
     - _Requirements: 7.2, 7.3_
   
-  - [ ] 13.2 Implement cache invalidation logic
+  - [-] 13.2 Implement cache invalidation logic
     - Add cache invalidation on user preference updates
     - Add cache invalidation on content updates
     - Add cache invalidation on bookmark changes

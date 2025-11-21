@@ -1,8 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { recommendationService } from '../services/recommendation.service';
 import { authenticateSession } from '../middleware/auth.middleware';
+import { cacheResponse } from '../middleware/cache.middleware';
 import { InteractionType, ContentType } from '../repositories/interaction.repository';
 import { FeedbackType } from '../repositories/recommendation.repository';
+import { CacheTTL } from '../config/redis';
 
 const router = Router();
 
@@ -10,7 +12,7 @@ const router = Router();
  * GET /api/recommendations
  * Get personalized recommendations (authenticated)
  */
-router.get('/', authenticateSession, async (req: Request, res: Response): Promise<void> => {
+router.get('/', authenticateSession, cacheResponse(CacheTTL.recommendations), async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user!.id;
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
