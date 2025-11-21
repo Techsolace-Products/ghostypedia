@@ -23,3 +23,10 @@ export {
   additionalSecurityHeaders,
   securityMiddlewareStack,
 } from './security.middleware';
+export {
+  AppError,
+  ErrorFactory,
+  errorHandler,
+  asyncHandler,
+  notFoundHandler,
+} from './error.middleware';

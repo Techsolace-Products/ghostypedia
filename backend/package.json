@@ -13,7 +13,12 @@
     "lint": "tsc --noEmit",
     "migrate:up": "ts-node src/scripts/migrate.ts up",
     "migrate:down": "ts-node src/scripts/migrate.ts down",
-    "migrate:status": "ts-node src/scripts/migrate.ts status"
+    "migrate:to": "ts-node src/scripts/migrate.ts to",
+    "migrate:status": "ts-node src/scripts/migrate.ts status",
+    "migrate:reset": "ts-node src/scripts/migrate.ts reset",
+    "seed": "ts-node src/scripts/seed.ts seed",
+    "seed:clear": "ts-node src/scripts/seed.ts clear",
+    "seed:reset": "ts-node src/scripts/seed.ts reset"
   },
   "keywords": [
     "ghostypedia",

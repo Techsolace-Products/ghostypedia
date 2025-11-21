@@ -2,7 +2,13 @@ import express, { Application } from 'express';
 import { config } from './config/env';
 import { checkDatabaseHealth, closeDatabaseConnection } from './config/database';
 import { connectRedis, disconnectRedis, checkRedisHealth } from './config/redis';
-import { securityMiddlewareStack, preventSQLInjection, preventXSS } from './middleware';
+import { 
+  securityMiddlewareStack, 
+  preventSQLInjection, 
+  preventXSS,
+  errorHandler,
+  notFoundHandler,
+} from './middleware';
 
 const app: Application = express();
 const PORT = config.port;
@@ -41,6 +47,12 @@ app.get('/health', async (_req, res) => {
     },
   });
 });
+
+// 404 handler for undefined routes (must be after all other routes)
+app.use(notFoundHandler);
+
+// Centralized error handler (must be last)
+app.use(errorHandler);
 
 // Initialize connections and start server
 async function startServer() {
