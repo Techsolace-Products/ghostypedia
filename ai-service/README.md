@@ -2,6 +2,8 @@
 
 Python-based AI service layer for Ghostypedia, providing recommendation engine and digital twin functionality using Google Gemini.
 
+> **Quick Start**: See [QUICK_START.md](QUICK_START.md) for a 2-minute setup guide!
+
 ## Prerequisites
 
 - Python 3.9 or higher
@@ -124,3 +126,5 @@ This project uses [uv](https://github.com/astral-sh/uv) for Python package manag
 - **Reliable**: Consistent dependency resolution
 - **Modern**: Built in Rust with modern Python tooling
 - **Simple**: Drop-in replacement for pip/venv workflows
+
+For detailed uv usage instructions, see [UV_GUIDE.md](UV_GUIDE.md).
