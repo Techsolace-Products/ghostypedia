@@ -9,6 +9,7 @@ import {
   InteractionType
 } from '../repositories/interaction.repository';
 import { cacheGet, cacheSet, cacheDelete, CacheKeys, CacheTTL } from '../config/redis';
+import { CacheInvalidation } from '../middleware/cache.middleware';
 
 export interface BookmarkService {
   addBookmark(
@@ -34,6 +35,8 @@ class BookmarkServiceImpl implements BookmarkService {
     tags: string[] = [],
     notes: string = ''
   ): Promise<Bookmark> {
+    const startTime = Date.now();
+
     // Create the bookmark
     const bookmark = await bookmarkRepository.createBookmark(
       userId,
@@ -51,8 +54,14 @@ class BookmarkServiceImpl implements BookmarkService {
       InteractionType.BOOKMARK
     );
 
-    // Invalidate bookmarks cache
-    await cacheDelete(CacheKeys.bookmarks(userId));
+    // Invalidate caches (must complete within 1 second as per requirement 7.4)
+    await this.invalidateBookmarkCaches(userId);
+
+    // Verify invalidation completed within time limit
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime > 1000) {
+      console.warn(`Bookmark cache invalidation took ${elapsedTime}ms, exceeding 1 second limit`);
+    }
 
     return bookmark;
   }
@@ -81,11 +90,19 @@ class BookmarkServiceImpl implements BookmarkService {
    * Remove a bookmark
    */
   async removeBookmark(userId: string, bookmarkId: string): Promise<void> {
+    const startTime = Date.now();
+
     // Delete the bookmark
     await bookmarkRepository.deleteBookmark(bookmarkId);
 
-    // Invalidate bookmarks cache
-    await cacheDelete(CacheKeys.bookmarks(userId));
+    // Invalidate caches (must complete within 1 second as per requirement 7.4)
+    await this.invalidateBookmarkCaches(userId);
+
+    // Verify invalidation completed within time limit
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime > 1000) {
+      console.warn(`Bookmark cache invalidation took ${elapsedTime}ms, exceeding 1 second limit`);
+    }
   }
 
   /**
@@ -96,13 +113,36 @@ class BookmarkServiceImpl implements BookmarkService {
     bookmarkId: string,
     tags: string[]
   ): Promise<Bookmark> {
+    const startTime = Date.now();
+
     // Update tags
     const bookmark = await bookmarkRepository.updateBookmarkTags(bookmarkId, tags);
 
-    // Invalidate bookmarks cache
-    await cacheDelete(CacheKeys.bookmarks(userId));
+    // Invalidate caches (must complete within 1 second as per requirement 7.4)
+    await this.invalidateBookmarkCaches(userId);
+
+    // Verify invalidation completed within time limit
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime > 1000) {
+      console.warn(`Bookmark cache invalidation took ${elapsedTime}ms, exceeding 1 second limit`);
+    }
 
     return bookmark;
+  }
+
+  /**
+   * Invalidate all bookmark-related caches for a user
+   * Must complete within 1 second (requirement 7.4)
+   */
+  private async invalidateBookmarkCaches(userId: string): Promise<void> {
+    // Run invalidations in parallel for speed
+    await Promise.all([
+      // Invalidate bookmark data cache
+      cacheDelete(CacheKeys.bookmarks(userId)),
+      
+      // Invalidate cached API responses for bookmarks
+      CacheInvalidation.invalidateBookmarkCaches(userId),
+    ]);
   }
 }
 
