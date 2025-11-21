@@ -150,7 +150,7 @@
     - **Property 14: Ghost entity retrieval round-trip**
     - **Validates: Requirements 3.4**
   
-  - [-] 5.8 Create ghost entity routes
+  - [x] 5.8 Create ghost entity routes
     - GET /api/ghosts endpoint with search and filter query params
     - GET /api/ghosts/:ghostId endpoint
     - GET /api/ghosts/category/:category endpoint

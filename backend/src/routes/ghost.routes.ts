@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { ghostService, GhostSearchOptions } from '../services/ghost.service';
+import { cacheResponse } from '../middleware/cache.middleware';
+import { CacheTTL } from '../config/redis';
 
 const router = Router();
 
@@ -7,7 +9,7 @@ const router = Router();
  * GET /api/ghosts
  * Search and browse ghost entities with filters
  */
-router.get('/', async (req: Request, res: Response): Promise<void> => {
+router.get('/', cacheResponse(CacheTTL.ghostEntities), async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       query,
@@ -96,49 +98,11 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
- * GET /api/ghosts/:ghostId
- * Get specific ghost entity by ID
- */
-router.get('/:ghostId', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { ghostId } = req.params;
-
-    const ghost = await ghostService.getGhostById(ghostId);
-
-    if (!ghost) {
-      res.status(404).json({
-        error: {
-          code: 'NOT_FOUND',
-          message: 'Ghost entity not found',
-          timestamp: new Date().toISOString(),
-          requestId: req.headers['x-request-id'] || 'unknown',
-        },
-      });
-      return;
-    }
-
-    res.status(200).json({
-      success: true,
-      data: ghost,
-    });
-  } catch (error) {
-    console.error('Error fetching ghost:', error);
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch ghost entity',
-        timestamp: new Date().toISOString(),
-        requestId: req.headers['x-request-id'] || 'unknown',
-      },
-    });
-  }
-});
-
-/**
  * GET /api/ghosts/category/:category
  * Get ghosts by category with pagination
+ * NOTE: This route must come before /:ghostId to avoid routing conflicts
  */
-router.get('/category/:category', async (req: Request, res: Response): Promise<void> => {
+router.get('/category/:category', cacheResponse(CacheTTL.ghostEntities), async (req: Request, res: Response): Promise<void> => {
   try {
     const { category } = req.params;
     const { page, limit } = req.query;
@@ -183,8 +147,9 @@ router.get('/category/:category', async (req: Request, res: Response): Promise<v
 /**
  * GET /api/ghosts/:ghostId/related
  * Get related ghost entities
+ * NOTE: This route must come before /:ghostId to avoid routing conflicts
  */
-router.get('/:ghostId/related', async (req: Request, res: Response): Promise<void> => {
+router.get('/:ghostId/related', cacheResponse(CacheTTL.ghostEntities), async (req: Request, res: Response): Promise<void> => {
   try {
     const { ghostId } = req.params;
 
@@ -200,6 +165,46 @@ router.get('/:ghostId/related', async (req: Request, res: Response): Promise<voi
       error: {
         code: 'INTERNAL_SERVER_ERROR',
         message: 'Failed to fetch related ghost entities',
+        timestamp: new Date().toISOString(),
+        requestId: req.headers['x-request-id'] || 'unknown',
+      },
+    });
+  }
+});
+
+/**
+ * GET /api/ghosts/:ghostId
+ * Get specific ghost entity by ID
+ * NOTE: This route must come last to avoid matching other routes
+ */
+router.get('/:ghostId', cacheResponse(CacheTTL.ghostEntities), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { ghostId } = req.params;
+
+    const ghost = await ghostService.getGhostById(ghostId);
+
+    if (!ghost) {
+      res.status(404).json({
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Ghost entity not found',
+          timestamp: new Date().toISOString(),
+          requestId: req.headers['x-request-id'] || 'unknown',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: ghost,
+    });
+  } catch (error) {
+    console.error('Error fetching ghost:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch ghost entity',
         timestamp: new Date().toISOString(),
         requestId: req.headers['x-request-id'] || 'unknown',
       },
