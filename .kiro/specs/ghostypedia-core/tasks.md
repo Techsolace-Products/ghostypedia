@@ -274,7 +274,7 @@
     - POST /api/recommendations/feedback endpoint (authenticated)
     - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 10. Implement Python AI service layer
+- [-] 10. Implement Python AI service layer
   - [ ] 10.1 Set up Python service structure
     - Initialize Python project with virtual environment
     - Install dependencies: google-generativeai, flask, requests

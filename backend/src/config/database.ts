@@ -1,4 +1,4 @@
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { config } from './env';
 
 // Create PostgreSQL connection pool
@@ -45,7 +45,7 @@ export async function executeInTransaction<T>(
 }
 
 // Query helper function
-export async function query<T = any>(
+export async function query<T extends QueryResultRow = any>(
   text: string,
   params?: any[]
 ): Promise<QueryResult<T>> {
