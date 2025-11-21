@@ -5,4 +5,6 @@ export { ghostRepository, GhostRepository, GhostEntity, SearchFilters, Paginatio
 export { storyRepository, StoryRepository, Story } from './story.repository';
 export { readingProgressRepository, ReadingProgressRepository, ReadingProgress } from './reading-progress.repository';
 export { bookmarkRepository, BookmarkRepository, Bookmark, BookmarkWithMetadata, ContentType } from './bookmark.repository';
-export { interactionRepository, InteractionRepository, Interaction, InteractionType } from './interaction.repository';
+export { interactionRepository, InteractionRepository, Interaction, InteractionType, InteractionFilters } from './interaction.repository';
+export { recommendationRepository, RecommendationRepository, Recommendation, Feedback, FeedbackType } from './recommendation.repository';
+export { conversationRepository, ConversationRepository, ConversationMessage, MessageRole } from './conversation.repository';
