@@ -158,23 +158,23 @@
     - Add response caching middleware
     - _Requirements: 3.1, 3.2, 3.4_
 
-- [ ] 6. Checkpoint - Ensure all tests pass
+- [x] 6. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Implement story and reading progress system
-  - [ ] 7.1 Create story repository
+- [x] 7. Implement story and reading progress system
+  - [x] 7.1 Create story repository
     - Implement getStoriesByGhostId with relationship queries
     - Implement getStoryById with caching
     - Create many-to-many relationship queries for ghost entities
     - _Requirements: 4.1, 4.4_
   
-  - [ ] 7.2 Create reading progress repository
+  - [x] 7.2 Create reading progress repository
     - Implement getReadingProgress
     - Implement updateReadingProgress with upsert logic
     - Implement markAsCompleted
     - _Requirements: 4.2, 4.3, 4.5_
   
-  - [ ] 7.3 Create story service
+  - [x] 7.3 Create story service
     - Implement story retrieval with metadata
     - Implement progress tracking logic
     - Add cache management for stories
@@ -194,7 +194,7 @@
     - **Property 18: Story completion updates status**
     - **Validates: Requirements 4.3**
   
-  - [ ] 7.7 Create story routes
+  - [x] 7.7 Create story routes
     - GET /api/stories/ghost/:ghostId endpoint
     - GET /api/stories/:storyId endpoint
     - PUT /api/stories/:storyId/progress endpoint (authenticated)

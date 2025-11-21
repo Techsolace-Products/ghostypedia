@@ -5,3 +5,6 @@ export type { EmailOptions } from './email.service';
 export { userService, UserService } from './user.service';
 export { preferencesService, PreferencesService } from './preferences.service';
 export { ghostService, GhostService, GhostSearchOptions } from './ghost.service';
+export { storyService, StoryService } from './story.service';
+export type { ReadingProgress } from '../repositories/reading-progress.repository';
+export type { Story } from '../repositories/story.repository';

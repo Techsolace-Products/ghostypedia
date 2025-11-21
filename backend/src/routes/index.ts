@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authRoutes from './auth.routes';
 import userRoutes from './user.routes';
 import ghostRoutes from './ghost.routes';
+import storyRoutes from './story.routes';
 
 const router = Router();
 
@@ -9,5 +10,6 @@ const router = Router();
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/ghosts', ghostRoutes);
+router.use('/stories', storyRoutes);
 
 export default router;
