@@ -1,2 +1,4 @@
-// Business logic services will be implemented here
-export {};
+export { authService, AuthenticationService } from './auth.service';
+export type { User, SessionToken, RegisterData, LoginData } from './auth.service';
+export { emailService, EmailService } from './email.service';
+export type { EmailOptions } from './email.service';

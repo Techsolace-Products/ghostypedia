@@ -1,2 +1,1 @@
-// Middleware functions will be implemented here
-export {};
+export { authenticateSession, optionalAuthentication } from './auth.middleware';

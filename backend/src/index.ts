@@ -10,6 +10,12 @@ const PORT = config.port;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Import routes
+import apiRoutes from './routes';
+
+// Mount API routes
+app.use('/api', apiRoutes);
+
 // Health check endpoint
 app.get('/health', async (_req, res) => {
   const dbHealthy = await checkDatabaseHealth();
