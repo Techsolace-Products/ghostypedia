@@ -456,8 +456,8 @@
 - [x] 17. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 18. Create API documentation
-  - [ ] 18.1 Document all API endpoints
+- [x] 18. Create API documentation
+  - [x] 18.1 Document all API endpoints
     - Document authentication endpoints with request/response examples
     - Document user and preferences endpoints
     - Document ghost entity endpoints with query parameters
@@ -468,7 +468,7 @@
     - Include error response examples
     - _Requirements: All_
   
-  - [ ] 18.2 Create README with setup instructions
+  - [x] 18.2 Create README with setup instructions
     - Document environment variables required
     - Document database setup steps
     - Document Redis setup
