@@ -202,15 +202,15 @@
     - POST /api/stories/:storyId/mark-read endpoint (authenticated)
     - _Requirements: 4.1, 4.2, 4.3, 4.5_
 
-- [ ] 8. Implement bookmark system
-  - [ ] 8.1 Create bookmark repository
+- [x] 8. Implement bookmark system
+  - [x] 8.1 Create bookmark repository
     - Implement createBookmark with polymorphic content references
     - Implement getUserBookmarks with content metadata joins
     - Implement deleteBookmark
     - Implement updateBookmarkTags
     - _Requirements: 10.1, 10.2, 10.3, 10.5_
   
-  - [ ] 8.2 Create bookmark service
+  - [x] 8.2 Create bookmark service
     - Implement bookmark creation with interaction event recording
     - Implement bookmark retrieval with content details
     - Implement tag management
@@ -233,7 +233,7 @@
     - **Property 42: Bookmark tag updates persist**
     - **Validates: Requirements 10.5**
   
-  - [ ] 8.7 Create bookmark routes
+  - [x] 8.7 Create bookmark routes
     - POST /api/bookmarks endpoint (authenticated)
     - GET /api/bookmarks endpoint (authenticated)
     - DELETE /api/bookmarks/:bookmarkId endpoint (authenticated)
@@ -241,7 +241,7 @@
     - _Requirements: 10.1, 10.2, 10.3, 10.5_
 
 - [ ] 9. Implement recommendation system
-  - [ ] 9.1 Create interaction repository
+  - [-] 9.1 Create interaction repository
     - Implement recordInteraction with timestamp
     - Implement getUserInteractions with filtering
     - Create interaction type enum

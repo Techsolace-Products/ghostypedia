@@ -6,5 +6,7 @@ export { userService, UserService } from './user.service';
 export { preferencesService, PreferencesService } from './preferences.service';
 export { ghostService, GhostService, GhostSearchOptions } from './ghost.service';
 export { storyService, StoryService } from './story.service';
+export { bookmarkService, BookmarkService } from './bookmark.service';
 export type { ReadingProgress } from '../repositories/reading-progress.repository';
 export type { Story } from '../repositories/story.repository';
+export type { Bookmark, BookmarkWithMetadata, ContentType } from '../repositories/bookmark.repository';

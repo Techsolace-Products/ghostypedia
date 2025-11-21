@@ -4,3 +4,5 @@ export { preferencesRepository, PreferencesRepository, PreferenceProfile, Prefer
 export { ghostRepository, GhostRepository, GhostEntity, SearchFilters, PaginationParams, PaginatedResult } from './ghost.repository';
 export { storyRepository, StoryRepository, Story } from './story.repository';
 export { readingProgressRepository, ReadingProgressRepository, ReadingProgress } from './reading-progress.repository';
+export { bookmarkRepository, BookmarkRepository, Bookmark, BookmarkWithMetadata, ContentType } from './bookmark.repository';
+export { interactionRepository, InteractionRepository, Interaction, InteractionType } from './interaction.repository';
