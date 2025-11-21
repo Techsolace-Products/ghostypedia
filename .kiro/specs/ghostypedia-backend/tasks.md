@@ -358,7 +358,7 @@
   - Ensure all tests pass, ask the user if questions arise.
 
 - [-] 13. Implement caching and performance optimizations
-  - [ ] 13.1 Add Redis caching middleware
+  - [-] 13.1 Add Redis caching middleware
     - Create cache middleware for GET endpoints
     - Implement cache key generation from request params
     - Add cache TTL configuration per endpoint type

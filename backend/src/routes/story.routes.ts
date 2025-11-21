@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { storyService } from '../services/story.service';
 import { authenticateSession } from '../middleware/auth.middleware';
+import { cacheResponse } from '../middleware/cache.middleware';
+import { CacheTTL } from '../config/redis';
 
 const router = Router();
 
@@ -8,7 +10,7 @@ const router = Router();
  * GET /api/stories/ghost/:ghostId
  * Get all stories for a ghost entity
  */
-router.get('/ghost/:ghostId', async (req: Request, res: Response): Promise<void> => {
+router.get('/ghost/:ghostId', cacheResponse(CacheTTL.stories), async (req: Request, res: Response): Promise<void> => {
   try {
     const { ghostId } = req.params;
 
@@ -35,7 +37,7 @@ router.get('/ghost/:ghostId', async (req: Request, res: Response): Promise<void>
  * GET /api/stories/:storyId
  * Get a specific story by ID
  */
-router.get('/:storyId', async (req: Request, res: Response): Promise<void> => {
+router.get('/:storyId', cacheResponse(CacheTTL.stories), async (req: Request, res: Response): Promise<void> => {
   try {
     const { storyId } = req.params;
 
