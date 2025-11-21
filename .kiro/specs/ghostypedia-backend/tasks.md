@@ -78,15 +78,15 @@
     - Implement send email function with error handling
     - _Requirements: 1.5_
 
-- [ ] 4. Implement user and preferences management
-  - [ ] 4.1 Create user service and repository
+- [x] 4. Implement user and preferences management
+  - [x] 4.1 Create user service and repository
     - Implement getUserById with caching
     - Implement updateUser with cache invalidation
     - Implement deleteUser with cascade deletion
     - Create user repository with database queries
     - _Requirements: 9.4_
   
-  - [ ] 4.2 Create preferences service
+  - [x] 4.2 Create preferences service
     - Implement getPreferences with default values for new users
     - Implement updatePreferences with validation
     - Implement cache invalidation on preference updates
@@ -105,7 +105,7 @@
     - **Property 36: User deletion cascades**
     - **Validates: Requirements 9.4**
   
-  - [ ] 4.6 Create user and preferences routes
+  - [x] 4.6 Create user and preferences routes
     - GET /api/users/:userId endpoint
     - PUT /api/users/:userId/preferences endpoint
     - GET /api/users/:userId/preferences endpoint
@@ -113,8 +113,8 @@
     - Add authentication middleware to all routes
     - _Requirements: 2.1, 2.4, 9.4_
 
-- [ ] 5. Implement ghost entity system
-  - [ ] 5.1 Create ghost entity repository
+- [-] 5. Implement ghost entity system
+  - [x] 5.1 Create ghost entity repository
     - Implement searchGhosts with full-text search
     - Implement getGhostById with caching
     - Implement getGhostsByCategory with pagination
@@ -122,7 +122,7 @@
     - Add query builder for complex filters
     - _Requirements: 3.1, 3.2, 3.4_
   
-  - [ ] 5.2 Create ghost entity service
+  - [x] 5.2 Create ghost entity service
     - Implement search with query parsing and filtering
     - Implement category filtering logic
     - Implement sorting by multiple criteria
@@ -150,7 +150,7 @@
     - **Property 14: Ghost entity retrieval round-trip**
     - **Validates: Requirements 3.4**
   
-  - [ ] 5.8 Create ghost entity routes
+  - [-] 5.8 Create ghost entity routes
     - GET /api/ghosts endpoint with search and filter query params
     - GET /api/ghosts/:ghostId endpoint
     - GET /api/ghosts/category/:category endpoint
