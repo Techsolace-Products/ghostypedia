@@ -2,13 +2,21 @@ import express, { Application } from 'express';
 import { config } from './config/env';
 import { checkDatabaseHealth, closeDatabaseConnection } from './config/database';
 import { connectRedis, disconnectRedis, checkRedisHealth } from './config/redis';
+import { securityMiddlewareStack, preventSQLInjection, preventXSS } from './middleware';
 
 const app: Application = express();
 const PORT = config.port;
 
-// Middleware
+// Security middleware (must be first)
+securityMiddlewareStack().forEach(middleware => app.use(middleware));
+
+// Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Input validation and sanitization middleware
+app.use(preventXSS);
+app.use(preventSQLInjection);
 
 // Import routes
 import apiRoutes from './routes';

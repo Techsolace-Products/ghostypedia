@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authService } from '../services/auth.service';
 import { authenticateSession } from '../middleware/auth.middleware';
+import { rateLimiters, ValidationRules, validate } from '../middleware';
 import {
   validateRegistrationData,
   validateLoginData,
@@ -10,11 +11,21 @@ import {
 
 const router = Router();
 
+// Apply auth-specific rate limiting to all routes in this router
+router.use(rateLimiters.auth);
+
 /**
  * POST /api/auth/register
  * Register a new user account
  */
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+router.post(
+  '/register',
+  validate([
+    ValidationRules.email(),
+    ValidationRules.password(),
+    ValidationRules.username(),
+  ]),
+  async (req: Request, res: Response): Promise<void> => {
   try {
     // Validate input
     const validationErrors = validateRegistrationData(req.body);
@@ -74,7 +85,13 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
  * POST /api/auth/login
  * Authenticate user and create session
  */
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post(
+  '/login',
+  validate([
+    ValidationRules.email(),
+    ValidationRules.password(),
+  ]),
+  async (req: Request, res: Response): Promise<void> => {
   try {
     // Validate input
     const validationErrors = validateLoginData(req.body);
