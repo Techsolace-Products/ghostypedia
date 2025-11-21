@@ -6,134 +6,135 @@ Ghostypedia is an AI-powered encyclopedia application that provides users with a
 
 ## Glossary
 
-- **Ghostypedia System**: The complete web application including frontend, backend, database, and AI services
-- **User**: An authenticated individual who interacts with the Ghostypedia System
+- **Ghostypedia Backend**: The backend API system including Express.js server, database, Redis cache, and AI services
+- **API Client**: Any frontend application or service that consumes the Ghostypedia Backend APIs
+- **User**: An authenticated individual whose data is managed by the Ghostypedia Backend
 - **Ghost Entity**: A paranormal entity record containing information about a specific ghost type, creature, or mythological being
-- **Digital Twin**: An AI-powered personalized assistant that learns from user preferences and provides customized recommendations
-- **Preference Profile**: A collection of user-selected interests, favorite ghost types, and content preferences
-- **Recommendation Engine**: The AI-powered component that suggests content based on user preferences and behavior
+- **Digital Twin Service**: An AI-powered service that generates personalized responses based on user preferences and conversation history
+- **Preference Profile**: A collection of user-selected interests, favorite ghost types, and content preferences stored in the database
+- **Recommendation Engine**: The AI-powered Python service that generates content suggestions based on user preferences and behavior
 - **Story Content**: Narrative content associated with ghost entities, including folklore, myths, and paranormal accounts
-- **Authentication Service**: The component responsible for user sign-in, sign-up, and session management
-- **Content Repository**: The database storage system for ghost entities, stories, and related content
+- **Authentication Service**: The backend component responsible for user registration, authentication, and session management
+- **Content Repository**: The PostgreSQL database storing ghost entities, stories, and related content
 
 ## Requirements
 
 ### Requirement 1
 
-**User Story:** As a new visitor, I want to create an account and sign in, so that I can access personalized features and save my preferences.
+**User Story:** As an API client, I want to register and authenticate users, so that users can access personalized features and save their preferences.
 
 #### Acceptance Criteria
 
-1. WHEN a visitor submits valid registration information THEN the Authentication Service SHALL create a new user account with encrypted credentials
-2. WHEN a user submits valid login credentials THEN the Authentication Service SHALL authenticate the user and establish a secure session
-3. WHEN a user attempts to access protected features without authentication THEN the Ghostypedia System SHALL redirect the user to the sign-in page
-4. WHEN a user successfully authenticates THEN the Ghostypedia System SHALL load the user's Preference Profile
-5. WHEN a user requests password reset THEN the Authentication Service SHALL send a secure reset link to the registered email address
+1. WHEN an API client submits valid registration information to the registration endpoint THEN the Authentication Service SHALL create a new user account with hashed credentials and return a success response
+2. WHEN an API client submits valid login credentials to the login endpoint THEN the Authentication Service SHALL authenticate the user and return a session token
+3. WHEN an API client makes a request to protected endpoints without a valid session token THEN the Ghostypedia Backend SHALL return a 401 Unauthorized response
+4. WHEN an API client provides a valid session token THEN the Ghostypedia Backend SHALL validate the session and allow access to protected resources
+5. WHEN an API client requests password reset THEN the Authentication Service SHALL generate a secure reset token and send a reset link via email
 
 ### Requirement 2
 
-**User Story:** As a user, I want to set and update my preferences, so that the system can personalize my experience and recommendations.
+**User Story:** As an API client, I want to manage user preferences, so that the system can personalize recommendations and content.
 
 #### Acceptance Criteria
 
-1. WHEN a user selects ghost types of interest THEN the Ghostypedia System SHALL store these selections in the user's Preference Profile
-2. WHEN a user updates preference settings THEN the Ghostypedia System SHALL persist the changes immediately to the database
-3. WHEN a user saves preferences THEN the Recommendation Engine SHALL recalibrate recommendations based on the updated Preference Profile
-4. WHEN a user views their preference settings THEN the Ghostypedia System SHALL display all current selections and allow modifications
-5. WHEN a new user completes initial setup THEN the Ghostypedia System SHALL prompt for minimum required preferences before allowing full access
+1. WHEN an API client submits user preference selections THEN the Ghostypedia Backend SHALL store these selections in the user's Preference Profile in the database
+2. WHEN an API client updates preference settings THEN the Ghostypedia Backend SHALL persist the changes immediately and return the updated profile
+3. WHEN preferences are updated THEN the Ghostypedia Backend SHALL invalidate cached recommendations for that user
+4. WHEN an API client requests user preferences THEN the Ghostypedia Backend SHALL return the complete Preference Profile from the database
+5. WHEN an API client retrieves a newly created user THEN the Ghostypedia Backend SHALL return an empty Preference Profile with default values
 
 ### Requirement 3
 
-**User Story:** As a user, I want to browse and search for different ghost types and paranormal entities, so that I can discover and learn about various supernatural beings.
+**User Story:** As an API client, I want to search and retrieve ghost entities, so that users can discover and learn about various supernatural beings.
 
 #### Acceptance Criteria
 
-1. WHEN a user enters a search query THEN the Ghostypedia System SHALL return all Ghost Entities matching the query terms within 2 seconds
-2. WHEN a user applies category filters THEN the Ghostypedia System SHALL display only Ghost Entities belonging to the selected categories
-3. WHEN a user views the browse page THEN the Ghostypedia System SHALL display Ghost Entities organized by type, origin, and popularity
-4. WHEN a user selects a Ghost Entity THEN the Ghostypedia System SHALL display comprehensive information including description, origin, characteristics, and related stories
-5. WHEN search results exceed 50 items THEN the Ghostypedia System SHALL implement pagination with navigation controls
+1. WHEN an API client submits a search query THEN the Ghostypedia Backend SHALL return all Ghost Entities matching the query terms within 2 seconds
+2. WHEN an API client applies category filters to a search request THEN the Ghostypedia Backend SHALL return only Ghost Entities belonging to the selected categories
+3. WHEN an API client requests ghost entities with sorting parameters THEN the Ghostypedia Backend SHALL return Ghost Entities ordered by the specified criteria
+4. WHEN an API client requests a specific Ghost Entity by ID THEN the Ghostypedia Backend SHALL return comprehensive information including description, origin, characteristics, and related entity IDs
+5. WHEN search results exceed 50 items THEN the Ghostypedia Backend SHALL return paginated results with metadata including total count and page information
 
 ### Requirement 4
 
-**User Story:** As a user, I want to read stories and folklore associated with ghost entities, so that I can immerse myself in paranormal narratives and mythology.
+**User Story:** As an API client, I want to retrieve stories and track reading progress, so that users can explore paranormal narratives and mythology.
 
 #### Acceptance Criteria
 
-1. WHEN a user selects a Ghost Entity THEN the Ghostypedia System SHALL display all associated Story Content
-2. WHEN a user reads a story THEN the Ghostypedia System SHALL track reading progress and allow resumption from the last position
-3. WHEN a user completes reading a story THEN the Ghostypedia System SHALL mark the story as read in the user's history
-4. WHEN a user views Story Content THEN the Ghostypedia System SHALL display metadata including origin, cultural context, and related entities
-5. WHEN Story Content contains references to other Ghost Entities THEN the Ghostypedia System SHALL provide navigable links to those entities
+1. WHEN an API client requests stories for a Ghost Entity ID THEN the Ghostypedia Backend SHALL return all associated Story Content
+2. WHEN an API client updates reading progress for a story THEN the Ghostypedia Backend SHALL persist the progress percentage and last read position to the database
+3. WHEN an API client marks a story as completed THEN the Ghostypedia Backend SHALL update the reading progress record with completion status
+4. WHEN an API client requests a specific story THEN the Ghostypedia Backend SHALL return complete story data including metadata, origin, cultural context, and related entity IDs
+5. WHEN an API client requests reading progress for a user and story THEN the Ghostypedia Backend SHALL return the current progress percentage and last read position
 
 ### Requirement 5
 
-**User Story:** As a user, I want to receive personalized recommendations for movies, stories, and paranormal content, so that I can discover new content aligned with my interests.
+**User Story:** As an API client, I want to retrieve personalized recommendations, so that users can discover new content aligned with their interests.
 
 #### Acceptance Criteria
 
-1. WHEN a user views the recommendations page THEN the Recommendation Engine SHALL generate suggestions based on the user's Preference Profile and interaction history
-2. WHEN a user interacts with recommended content THEN the Recommendation Engine SHALL update its model to improve future recommendations
-3. WHEN a user provides feedback on recommendations THEN the Ghostypedia System SHALL incorporate the feedback into the Recommendation Engine's learning model
-4. WHEN the Recommendation Engine generates suggestions THEN the Ghostypedia System SHALL include diverse content types including movies, stories, myths, and Ghost Entities
-5. WHEN a user has insufficient interaction history THEN the Recommendation Engine SHALL provide recommendations based on popular content and initial preferences
+1. WHEN an API client requests recommendations for a user THEN the Recommendation Engine SHALL generate suggestions based on the user's Preference Profile and interaction history
+2. WHEN an API client records a user interaction with content THEN the Ghostypedia Backend SHALL store the interaction and trigger recommendation model updates
+3. WHEN an API client submits feedback on a recommendation THEN the Ghostypedia Backend SHALL persist the feedback and update the Recommendation Engine's model
+4. WHEN the Recommendation Engine generates suggestions THEN the Ghostypedia Backend SHALL return diverse content types including movies, stories, myths, and Ghost Entities
+5. WHEN a user has insufficient interaction history THEN the Recommendation Engine SHALL generate recommendations based on popular content and the user's initial preferences
 
 ### Requirement 6
 
-**User Story:** As a user, I want to interact with my AI digital twin, so that I can receive personalized guidance and have engaging conversations about paranormal topics.
+**User Story:** As an API client, I want to facilitate AI digital twin conversations, so that users can receive personalized guidance about paranormal topics.
 
 #### Acceptance Criteria
 
-1. WHEN a user sends a message to the Digital Twin THEN the Ghostypedia System SHALL generate a contextually relevant response within 3 seconds
-2. WHEN the Digital Twin responds THEN the Ghostypedia System SHALL incorporate the user's Preference Profile and interaction history into the response
-3. WHEN a user asks for recommendations THEN the Digital Twin SHALL provide personalized suggestions with explanations based on user interests
-4. WHEN a user engages in conversation THEN the Digital Twin SHALL maintain conversation context across multiple exchanges
-5. WHEN the Digital Twin provides information THEN the Ghostypedia System SHALL cite relevant Ghost Entities and Story Content from the Content Repository
+1. WHEN an API client sends a user message to the digital twin endpoint THEN the Digital Twin Service SHALL generate a contextually relevant response within 3 seconds
+2. WHEN the Digital Twin Service generates a response THEN the Ghostypedia Backend SHALL incorporate the user's Preference Profile and interaction history into the request context
+3. WHEN an API client requests conversation history THEN the Ghostypedia Backend SHALL return previous messages ordered by timestamp
+4. WHEN the Digital Twin Service generates responses THEN the Ghostypedia Backend SHALL store conversation messages in the database for context maintenance
+5. WHEN the Digital Twin Service references content THEN the Ghostypedia Backend SHALL include Ghost Entity IDs and Story IDs in the response metadata
 
 ### Requirement 7
 
-**User Story:** As a user, I want the application to be responsive and accessible across devices, so that I can explore Ghostypedia on desktop, tablet, or mobile.
+**User Story:** As an API client, I want the backend to provide efficient and reliable API responses, so that client applications can deliver a smooth user experience.
 
 #### Acceptance Criteria
 
-1. WHEN a user accesses the Ghostypedia System on any device THEN the user interface SHALL adapt to the screen size and maintain full functionality
-2. WHEN a user navigates the application THEN the Ghostypedia System SHALL provide consistent user experience across all supported browsers
-3. WHEN a user interacts with touch-enabled devices THEN the Ghostypedia System SHALL support touch gestures for navigation and interaction
-4. WHEN page content loads THEN the Ghostypedia System SHALL display content progressively to maintain perceived performance
-5. WHEN a user has slow network connectivity THEN the Ghostypedia System SHALL implement caching strategies to minimize data transfer
+1. WHEN an API client makes a request THEN the Ghostypedia Backend SHALL return responses with appropriate HTTP status codes and error messages
+2. WHEN an API client requests data THEN the Ghostypedia Backend SHALL implement Redis caching to reduce database load and improve response times
+3. WHEN an API client makes repeated requests for the same data THEN the Ghostypedia Backend SHALL serve cached responses when data has not changed
+4. WHEN cached data is invalidated THEN the Ghostypedia Backend SHALL update or remove the cache entry within 1 second
+5. WHEN an API client requests large datasets THEN the Ghostypedia Backend SHALL implement pagination to limit response payload size
 
 ### Requirement 8
 
-**User Story:** As a system administrator, I want the application to handle errors gracefully and maintain data integrity, so that users have a reliable experience.
+**User Story:** As a system administrator, I want the backend to handle errors gracefully and maintain data integrity, so that the system remains reliable.
 
 #### Acceptance Criteria
 
-1. WHEN a system error occurs THEN the Ghostypedia System SHALL log the error details and display a user-friendly error message
-2. WHEN database operations fail THEN the Ghostypedia System SHALL rollback incomplete transactions to maintain data consistency
-3. WHEN the AI service is unavailable THEN the Ghostypedia System SHALL provide fallback functionality and notify users of limited features
-4. WHEN concurrent users modify the same data THEN the Ghostypedia System SHALL implement conflict resolution to prevent data corruption
-5. WHEN system resources reach capacity thresholds THEN the Ghostypedia System SHALL implement rate limiting and queue management
+1. WHEN a system error occurs THEN the Ghostypedia Backend SHALL log the error details with timestamp and stack trace and return a structured error response
+2. WHEN database operations fail THEN the Ghostypedia Backend SHALL rollback incomplete transactions to maintain data consistency
+3. WHEN the AI service is unavailable THEN the Ghostypedia Backend SHALL return an appropriate error response indicating service degradation
+4. WHEN concurrent requests modify the same data THEN the Ghostypedia Backend SHALL use database transactions and locking to prevent data corruption
+5. WHEN API request rates exceed defined thresholds THEN the Ghostypedia Backend SHALL implement rate limiting using Redis and return 429 status codes
 
 ### Requirement 9
 
-**User Story:** As a user, I want my data to be secure and private, so that my personal information and preferences are protected.
+**User Story:** As a system administrator, I want the backend to implement security best practices, so that user data is protected.
 
 #### Acceptance Criteria
 
-1. WHEN a user submits sensitive information THEN the Ghostypedia System SHALL encrypt the data both in transit and at rest
-2. WHEN a user authenticates THEN the Authentication Service SHALL implement secure session management with automatic timeout
-3. WHEN the Ghostypedia System stores passwords THEN the Authentication Service SHALL use industry-standard hashing algorithms with salt
-4. WHEN a user requests data deletion THEN the Ghostypedia System SHALL remove all personal data within 30 days
-5. WHEN API requests are made THEN the Ghostypedia System SHALL validate and sanitize all inputs to prevent injection attacks
+1. WHEN an API client submits data over HTTPS THEN the Ghostypedia Backend SHALL enforce TLS encryption for all data in transit
+2. WHEN a user session is created THEN the Authentication Service SHALL set session expiration and implement automatic timeout after 24 hours of inactivity
+3. WHEN the Authentication Service stores passwords THEN the Ghostypedia Backend SHALL use bcrypt hashing with salt rounds of at least 10
+4. WHEN an API client requests user data deletion THEN the Ghostypedia Backend SHALL cascade delete all associated user data from the database
+5. WHEN an API client submits request data THEN the Ghostypedia Backend SHALL validate and sanitize all inputs to prevent SQL injection and XSS attacks
 
 ### Requirement 10
 
-**User Story:** As a user, I want to bookmark and save favorite ghost entities and stories, so that I can easily return to content I enjoy.
+**User Story:** As an API client, I want to manage user bookmarks, so that users can save and organize their favorite content.
 
 #### Acceptance Criteria
 
-1. WHEN a user bookmarks a Ghost Entity THEN the Ghostypedia System SHALL add the entity to the user's saved collection
-2. WHEN a user views their saved collection THEN the Ghostypedia System SHALL display all bookmarked Ghost Entities and Story Content
-3. WHEN a user removes a bookmark THEN the Ghostypedia System SHALL update the saved collection immediately
-4. WHEN a user bookmarks content THEN the Recommendation Engine SHALL consider saved items when generating future recommendations
-5. WHEN a user organizes bookmarks THEN the Ghostypedia System SHALL allow custom categorization and tagging
+1. WHEN an API client creates a bookmark for a Ghost Entity or Story THEN the Ghostypedia Backend SHALL persist the bookmark to the database with user ID and content reference
+2. WHEN an API client requests a user's bookmarks THEN the Ghostypedia Backend SHALL return all bookmarked content with associated metadata
+3. WHEN an API client deletes a bookmark THEN the Ghostypedia Backend SHALL remove the bookmark record from the database immediately
+4. WHEN a bookmark is created THEN the Ghostypedia Backend SHALL record an interaction event for the Recommendation Engine
+5. WHEN an API client updates bookmark tags THEN the Ghostypedia Backend SHALL persist the tag changes to the database
