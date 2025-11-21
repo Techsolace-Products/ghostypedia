@@ -10,6 +10,7 @@ export const config = {
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || '',
     maxConnections: parseInt(process.env.DB_MAX_CONNECTIONS || '20'),
+    ssl: process.env.DB_SSL === 'true',
   },
   
   redis: {

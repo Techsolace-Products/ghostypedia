@@ -11,6 +11,9 @@ const pool = new Pool({
   max: config.database.maxConnections,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
+  ssl: config.nodeEnv === 'production' || config.database.host.includes('neon.tech') || config.database.host.includes('aws')
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 // Connection health check utility

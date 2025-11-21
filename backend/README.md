@@ -28,6 +28,7 @@ Backend API for Ghostypedia - an AI-powered encyclopedia of ghosts, creatures, m
 - **fast-check** - Property-based testing
 - **bcrypt** - Password hashing
 - **jsonwebtoken** - JWT authentication
+- **dotenv** - Environment variable management
 - **Python** (3.9+) - AI service layer
 - **Google Gemini** - AI/LLM capabilities
 
@@ -589,6 +590,7 @@ npm test -- --clearCache
 1. **"Cannot find module"** - Run `npm install`
 2. **"Permission denied"** - Use `sudo` or fix file permissions
 3. **"Out of memory"** - Increase Node.js memory: `NODE_OPTIONS=--max-old-space-size=4096 npm start`
+4. **Environment variables not loading** - Ensure `.env` file exists in the backend directory and `dotenv` package is installed. The application automatically loads environment variables on startup.
 
 ## Additional Resources
 

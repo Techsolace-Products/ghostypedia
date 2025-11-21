@@ -1,3 +1,7 @@
+// Load environment variables first
+import dotenv from 'dotenv';
+dotenv.config();
+
 import bcrypt from 'bcrypt';
 import { executeInTransaction, closeDatabaseConnection } from '../config/database';
 import { PoolClient } from 'pg';
