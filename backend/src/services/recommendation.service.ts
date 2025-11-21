@@ -111,6 +111,8 @@ class RecommendationServiceImpl implements RecommendationService {
     contentType: ContentType,
     interactionType: InteractionType
   ): Promise<Interaction> {
+    const startTime = Date.now();
+
     // Record the interaction in the database
     const interaction = await interactionRepository.recordInteraction(
       userId,
@@ -121,7 +123,14 @@ class RecommendationServiceImpl implements RecommendationService {
 
     // Invalidate recommendations cache since new interaction data is available
     // This will trigger recommendation model updates on next request
-    await cacheDelete(CacheKeys.recommendations(userId));
+    // Must complete within 1 second (requirement 7.4)
+    await this.invalidateRecommendationCaches(userId);
+
+    // Verify invalidation completed within time limit
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime > 1000) {
+      console.warn(`Recommendation cache invalidation took ${elapsedTime}ms, exceeding 1 second limit`);
+    }
 
     return interaction;
   }
@@ -134,11 +143,37 @@ class RecommendationServiceImpl implements RecommendationService {
     recommendationId: string,
     feedbackType: FeedbackType
   ): Promise<void> {
+    const startTime = Date.now();
+
     // Record the feedback in the database
     await recommendationRepository.recordFeedback(userId, recommendationId, feedbackType);
 
     // Invalidate recommendations cache to trigger model update
-    await cacheDelete(CacheKeys.recommendations(userId));
+    // Must complete within 1 second (requirement 7.4)
+    await this.invalidateRecommendationCaches(userId);
+
+    // Verify invalidation completed within time limit
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime > 1000) {
+      console.warn(`Recommendation cache invalidation took ${elapsedTime}ms, exceeding 1 second limit`);
+    }
+  }
+
+  /**
+   * Invalidate all recommendation-related caches for a user
+   * Must complete within 1 second (requirement 7.4)
+   */
+  private async invalidateRecommendationCaches(userId: string): Promise<void> {
+    const { CacheInvalidation } = await import('../middleware/cache.middleware');
+    
+    // Run invalidations in parallel for speed
+    await Promise.all([
+      // Invalidate recommendation data cache
+      cacheDelete(CacheKeys.recommendations(userId)),
+      
+      // Invalidate cached API responses for recommendations
+      CacheInvalidation.invalidateRecommendationCaches(userId),
+    ]);
   }
 }
 
