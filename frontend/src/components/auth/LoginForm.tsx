@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import type { ApiError } from '@/types/auth';
 
 export function LoginForm() {
+  const router = useRouter();
   const { login } = useAuth();
   const [apiError, setApiError] = useState<string>('');
   const {
@@ -24,6 +26,7 @@ export function LoginForm() {
     setApiError('');
     try {
       await login(data);
+      router.push('/dashboard');
     } catch (error) {
       const apiErr = error as ApiError;
       setApiError(apiErr.message || 'Login failed. Please try again.');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import type { ApiError } from '@/types/auth';
 
 export function RegisterForm() {
+  const router = useRouter();
   const { register: registerUser } = useAuth();
   const [apiError, setApiError] = useState<string>('');
   const {
@@ -28,6 +30,7 @@ export function RegisterForm() {
         username: data.username,
         password: data.password,
       });
+      router.push('/dashboard');
     } catch (error) {
       const apiErr = error as ApiError;
       setApiError(apiErr.message || 'Registration failed. Please try again.');
