@@ -111,6 +111,13 @@ function logError(error: any, req: Request, requestId: string): void {
     stack: error.stack,
   };
   
+  // Always log to console for debugging
+  console.error('=== ERROR CAUGHT ===');
+  console.error('Path:', req.method, req.path);
+  console.error('Error:', error);
+  console.error('Stack:', error.stack);
+  console.error('==================');
+  
   // Log based on severity
   if (getStatusCodeFromError(error) >= 500) {
     console.error('Server Error:', JSON.stringify(errorLog, null, 2));

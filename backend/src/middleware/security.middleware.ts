@@ -72,17 +72,22 @@ export const helmetMiddleware = helmet({
  */
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
+    // In development, allow all origins
+    if (config.nodeEnv === 'development') {
+      return callback(null, true);
+    }
+
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) {
       return callback(null, true);
     }
 
-    // In production, you should whitelist specific origins
+    // In production, whitelist specific origins
     const allowedOrigins = process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(',')
       : ['http://localhost:3000', 'http://localhost:3001'];
 
-    if (config.nodeEnv === 'development' || allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

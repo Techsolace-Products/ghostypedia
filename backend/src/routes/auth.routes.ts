@@ -27,9 +27,12 @@ router.post(
   ]),
   async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('Registration request received:', { email: req.body.email, username: req.body.username });
+    
     // Validate input
     const validationErrors = validateRegistrationData(req.body);
     if (validationErrors.length > 0) {
+      console.log('Validation errors:', validationErrors);
       res.status(400).json({
         error: {
           code: 'VALIDATION_ERROR',
@@ -45,7 +48,9 @@ router.post(
     const { email, password, username } = req.body;
 
     // Register user
+    console.log('Calling authService.register...');
     const user = await authService.register({ email, password, username });
+    console.log('User registered successfully:', user.id);
 
     res.status(201).json({
       success: true,
@@ -57,6 +62,8 @@ router.post(
       },
     });
   } catch (error: any) {
+    console.error('Registration error:', error);
+    
     // Handle duplicate email/username errors
     if (error.code === '23505') {
       res.status(409).json({

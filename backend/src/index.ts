@@ -24,6 +24,12 @@ securityMiddlewareStack().forEach(middleware => app.use(middleware));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Debug logging middleware
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 // Input validation and sanitization middleware
 app.use(preventXSS);
 app.use(preventSQLInjection);
@@ -50,6 +56,17 @@ app.get('/health', async (_req, res) => {
       redis: redisHealthy ? 'healthy' : 'unhealthy',
     },
   });
+});
+
+// Test endpoint to debug registration
+app.post('/test-register', express.json(), async (req, res) => {
+  try {
+    console.log('Test register endpoint hit with body:', req.body);
+    res.json({ success: true, body: req.body });
+  } catch (error) {
+    console.error('Test register error:', error);
+    res.status(500).json({ error: String(error) });
+  }
 });
 
 // 404 handler for undefined routes (must be after all other routes)
