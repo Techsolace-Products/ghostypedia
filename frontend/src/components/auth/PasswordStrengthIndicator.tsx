@@ -1,0 +1,1 @@
+// Password strength indicator component
