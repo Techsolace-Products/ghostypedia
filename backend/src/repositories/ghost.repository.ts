@@ -39,11 +39,24 @@ export interface PaginatedResult<T> {
   };
 }
 
+export interface CreateGhostData {
+  name: string;
+  type: string;
+  origin?: string;
+  culturalContext?: string;
+  description: string;
+  characteristics?: string[];
+  dangerLevel?: number;
+  imageUrl?: string;
+  tags?: string[];
+}
+
 export interface GhostRepository {
   searchGhosts(query: string, filters: SearchFilters, pagination: PaginationParams): Promise<PaginatedResult<GhostEntity>>;
   getGhostById(ghostId: string): Promise<GhostEntity | null>;
   getGhostsByCategory(category: string, pagination: PaginationParams): Promise<PaginatedResult<GhostEntity>>;
   getRelatedGhosts(ghostId: string): Promise<GhostEntity[]>;
+  createGhost(data: CreateGhostData): Promise<GhostEntity>;
 }
 
 class GhostRepositoryImpl implements GhostRepository {
@@ -117,7 +130,7 @@ class GhostRepositoryImpl implements GhostRepository {
     const result = await query<any>(
       `SELECT id, name, type, origin, cultural_context as "culturalContext",
               description, characteristics, danger_level as "dangerLevel",
-              image_url as "imageUrl", related_entity_ids as "relatedEntityIds",
+              image_url as "imageUrl", ARRAY[]::uuid[] as "relatedEntityIds",
               tags, created_at as "createdAt", updated_at as "updatedAt"
        FROM ghost_entities
        ${whereClause}
@@ -148,14 +161,20 @@ class GhostRepositoryImpl implements GhostRepository {
       return cached;
     }
 
-    // Query database
+    // Query database with related entities from relationship table
     const result = await query<any>(
-      `SELECT id, name, type, origin, cultural_context as "culturalContext",
-              description, characteristics, danger_level as "dangerLevel",
-              image_url as "imageUrl", related_entity_ids as "relatedEntityIds",
-              tags, created_at as "createdAt", updated_at as "updatedAt"
-       FROM ghost_entities
-       WHERE id = $1`,
+      `SELECT g.id, g.name, g.type, g.origin, g.cultural_context as "culturalContext",
+              g.description, g.characteristics, g.danger_level as "dangerLevel",
+              g.image_url as "imageUrl",
+              COALESCE(
+                ARRAY_AGG(r.related_ghost_entity_id) FILTER (WHERE r.related_ghost_entity_id IS NOT NULL),
+                ARRAY[]::uuid[]
+              ) as "relatedEntityIds",
+              g.tags, g.created_at as "createdAt", g.updated_at as "updatedAt"
+       FROM ghost_entities g
+       LEFT JOIN ghost_entity_relationships r ON g.id = r.ghost_entity_id
+       WHERE g.id = $1
+       GROUP BY g.id`,
       [ghostId]
     );
 
@@ -192,7 +211,7 @@ class GhostRepositoryImpl implements GhostRepository {
     const result = await query<any>(
       `SELECT id, name, type, origin, cultural_context as "culturalContext",
               description, characteristics, danger_level as "dangerLevel",
-              image_url as "imageUrl", related_entity_ids as "relatedEntityIds",
+              image_url as "imageUrl", ARRAY[]::uuid[] as "relatedEntityIds",
               tags, created_at as "createdAt", updated_at as "updatedAt"
        FROM ghost_entities
        WHERE type = $1
@@ -216,25 +235,49 @@ class GhostRepositoryImpl implements GhostRepository {
    * Get related ghost entities
    */
   async getRelatedGhosts(ghostId: string): Promise<GhostEntity[]> {
-    // First get the ghost entity to access related_entity_ids
-    const ghost = await this.getGhostById(ghostId);
-    if (!ghost || !ghost.relatedEntityIds || ghost.relatedEntityIds.length === 0) {
-      return [];
-    }
-
-    // Query for related entities
+    // Query for related entities using the relationship table
     const result = await query<any>(
-      `SELECT id, name, type, origin, cultural_context as "culturalContext",
-              description, characteristics, danger_level as "dangerLevel",
-              image_url as "imageUrl", related_entity_ids as "relatedEntityIds",
-              tags, created_at as "createdAt", updated_at as "updatedAt"
-       FROM ghost_entities
-       WHERE id = ANY($1)
-       ORDER BY name ASC`,
-      [ghost.relatedEntityIds]
+      `SELECT g.id, g.name, g.type, g.origin, g.cultural_context as "culturalContext",
+              g.description, g.characteristics, g.danger_level as "dangerLevel",
+              g.image_url as "imageUrl", ARRAY[]::uuid[] as "relatedEntityIds",
+              g.tags, g.created_at as "createdAt", g.updated_at as "updatedAt"
+       FROM ghost_entities g
+       INNER JOIN ghost_entity_relationships r ON g.id = r.related_ghost_entity_id
+       WHERE r.ghost_entity_id = $1
+       ORDER BY g.name ASC`,
+      [ghostId]
     );
 
     return result.rows;
+  }
+
+  /**
+   * Create a new ghost entity
+   */
+  async createGhost(data: CreateGhostData): Promise<GhostEntity> {
+    const result = await query<any>(
+      `INSERT INTO ghost_entities (
+        name, type, origin, cultural_context, description,
+        characteristics, danger_level, image_url, tags
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id, name, type, origin, cultural_context as "culturalContext",
+                description, characteristics, danger_level as "dangerLevel",
+                image_url as "imageUrl", ARRAY[]::uuid[] as "relatedEntityIds",
+                tags, created_at as "createdAt", updated_at as "updatedAt"`,
+      [
+        data.name,
+        data.type,
+        data.origin || null,
+        data.culturalContext || null,
+        data.description,
+        data.characteristics || [],
+        data.dangerLevel || 3,
+        data.imageUrl || null,
+        data.tags || [],
+      ]
+    );
+
+    return result.rows[0];
   }
 }
 

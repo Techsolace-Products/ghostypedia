@@ -19,6 +19,9 @@ export default function Home() {
                 <LoadingSpinner size="sm" />
               ) : isAuthenticated ? (
                 <>
+                  <Link href="/ghosts" className="text-sm text-gray-300 hover:text-white">
+                    Browse Ghosts
+                  </Link>
                   <span className="text-sm text-gray-300">Hi, {user?.username}</span>
                   <Link href="/dashboard">
                     <Button variant="primary">Dashboard</Button>

@@ -11,7 +11,7 @@ import {
 } from '../repositories/interaction.repository';
 import { preferencesRepository } from '../repositories/preferences.repository';
 import { cacheGet, cacheSet, cacheDelete, CacheKeys, CacheTTL } from '../config/redis';
-import { aiServiceClient, AIServiceUnavailableError } from './ai-client.service';
+import { aiServiceClient } from './ai-client.service';
 
 export interface RecommendationService {
   getPersonalizedRecommendations(userId: string, limit?: number): Promise<Recommendation[]>;
@@ -42,63 +42,92 @@ class RecommendationServiceImpl implements RecommendationService {
     }
 
     try {
-      // Get user preferences
-      const preferences = await preferencesRepository.findByUserId(userId);
+      // First, try to get existing recommendations from database
+      const existingRecommendations = await recommendationRepository.getRecommendations(userId, limit);
       
-      // Get user interaction history
-      const interactions = await interactionRepository.getUserInteractions(userId, { limit: 50 });
-
-      // Generate recommendations using AI service
-      const aiResponse = await aiServiceClient.generateRecommendations({
-        user_id: userId,
-        preference_profile: {
-          favorite_ghost_types: preferences?.favoriteGhostTypes || [],
-          preferred_content_types: preferences?.preferredContentTypes || [],
-          cultural_interests: preferences?.culturalInterests || [],
-          spookiness_level: preferences?.spookinessLevel || 3,
-        },
-        interaction_history: interactions.map(i => ({
-          content_id: i.contentId,
-          content_type: i.contentType,
-          interaction_type: i.interactionType,
-          timestamp: i.timestamp.toISOString(),
-        })),
-        limit,
-      });
-
-      // Store AI-generated recommendations in database
-      const recommendations: Recommendation[] = [];
-      for (const aiRec of aiResponse.recommendations) {
-        const rec = await recommendationRepository.createRecommendation(
-          userId,
-          aiRec.content_id,
-          aiRec.content_type as ContentType,
-          aiRec.score,
-          aiRec.reasoning
-        );
-        recommendations.push(rec);
-      }
-
-      // Store in cache
-      if (recommendations.length > 0) {
-        await cacheSet(cacheKey, recommendations, CacheTTL.recommendations);
-      }
-
-      return recommendations;
-    } catch (error) {
-      // Fallback to database recommendations if AI service fails
-      if (error instanceof AIServiceUnavailableError) {
-        console.warn('AI service unavailable, falling back to database recommendations');
-        const recommendations = await recommendationRepository.getRecommendations(userId, limit);
+      // If we have recent recommendations (less than 1 hour old), return them
+      if (existingRecommendations.length > 0) {
+        const latestRec = existingRecommendations[0];
+        const recAge = Date.now() - new Date(latestRec.generatedAt).getTime();
+        const oneHour = 60 * 60 * 1000;
         
-        // Cache fallback recommendations with shorter TTL
+        if (recAge < oneHour) {
+          await cacheSet(cacheKey, existingRecommendations, CacheTTL.recommendations);
+          return existingRecommendations;
+        }
+      }
+
+      // Try to generate new recommendations using AI service
+      try {
+        // Get user preferences
+        const preferences = await preferencesRepository.findByUserId(userId);
+        
+        // Get user interaction history
+        const interactions = await interactionRepository.getUserInteractions(userId, { limit: 50 });
+
+        // Generate recommendations using AI service
+        const aiResponse = await aiServiceClient.generateRecommendations({
+          user_id: userId,
+          preference_profile: {
+            favorite_ghost_types: preferences?.favoriteGhostTypes || [],
+            preferred_content_types: preferences?.preferredContentTypes || [],
+            cultural_interests: preferences?.culturalInterests || [],
+            spookiness_level: preferences?.spookinessLevel || 3,
+          },
+          interaction_history: interactions.map(i => ({
+            content_id: i.contentId,
+            content_type: i.contentType,
+            interaction_type: i.interactionType,
+            timestamp: i.timestamp.toISOString(),
+          })),
+          limit,
+        });
+
+        // Store AI-generated recommendations in database
+        const recommendations: Recommendation[] = [];
+        for (const aiRec of aiResponse.recommendations) {
+          const rec = await recommendationRepository.createRecommendation(
+            userId,
+            aiRec.content_id,
+            aiRec.content_type as ContentType,
+            aiRec.score,
+            aiRec.reasoning
+          );
+          recommendations.push(rec);
+        }
+
+        // Store in cache
         if (recommendations.length > 0) {
-          await cacheSet(cacheKey, recommendations, 300); // 5 minutes
+          await cacheSet(cacheKey, recommendations, CacheTTL.recommendations);
+        }
+
+        return recommendations;
+      } catch (aiError) {
+        // AI service failed, use fallback
+        console.warn('AI service error, using fallback recommendations:', aiError);
+        
+        // Return existing recommendations if available
+        if (existingRecommendations.length > 0) {
+          await cacheSet(cacheKey, existingRecommendations, 300); // 5 minutes
+          return existingRecommendations;
         }
         
-        return recommendations;
+        // If no existing recommendations, return empty array
+        // Frontend should handle this gracefully
+        return [];
       }
-      throw error;
+    } catch (error) {
+      console.error('Error in getPersonalizedRecommendations:', error);
+      
+      // Final fallback: try to get any recommendations from database
+      try {
+        const fallbackRecommendations = await recommendationRepository.getRecommendations(userId, limit);
+        return fallbackRecommendations;
+      } catch (dbError) {
+        console.error('Database fallback also failed:', dbError);
+        // Return empty array rather than throwing
+        return [];
+      }
     }
   }
 

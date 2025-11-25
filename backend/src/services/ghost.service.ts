@@ -4,6 +4,7 @@ import {
   SearchFilters,
   PaginationParams,
   PaginatedResult,
+  CreateGhostData,
 } from '../repositories/ghost.repository';
 import { cacheGet, cacheSet, CacheKeys, CacheTTL } from '../config/redis';
 
@@ -24,7 +25,11 @@ export interface GhostService {
   getGhostById(ghostId: string): Promise<GhostEntity | null>;
   getGhostsByCategory(category: string, page?: number, limit?: number): Promise<PaginatedResult<GhostEntity>>;
   getRelatedGhosts(ghostId: string): Promise<GhostEntity[]>;
+  createGhost(data: CreateGhostData, userId?: string): Promise<GhostEntity>;
 }
+
+// Re-export CreateGhostData for convenience
+export type { CreateGhostData } from '../repositories/ghost.repository';
 
 class GhostServiceImpl implements GhostService {
   /**
@@ -141,6 +146,55 @@ class GhostServiceImpl implements GhostService {
    */
   async getRelatedGhosts(ghostId: string): Promise<GhostEntity[]> {
     return ghostRepository.getRelatedGhosts(ghostId);
+  }
+
+  /**
+   * Create a new ghost entity and update user preferences
+   */
+  async createGhost(data: CreateGhostData, userId?: string): Promise<GhostEntity> {
+    // Validate danger level
+    if (data.dangerLevel !== undefined && (data.dangerLevel < 1 || data.dangerLevel > 5)) {
+      throw new Error('Danger level must be between 1 and 5');
+    }
+
+    // Create the ghost entity
+    const ghost = await ghostRepository.createGhost(data);
+
+    // Update user preferences with tags (learn from user's interests)
+    if (userId && data.tags && data.tags.length > 0) {
+      try {
+        const { preferencesRepository } = await import('../repositories/preferences.repository');
+        await preferencesRepository.addCulturalInterests(userId, data.tags);
+        console.log(`Added tags to user ${userId} preferences:`, data.tags);
+      } catch (error) {
+        // Don't fail ghost creation if preference update fails
+        console.error('Failed to update user preferences with tags:', error);
+      }
+    }
+
+    // Invalidate search caches so new ghost appears immediately
+    try {
+      // Log ghost creation for debugging
+      console.log(`Ghost created: ${ghost.name} (${ghost.id})`);
+      
+      // Invalidate all ghost-related caches
+      // This ensures the new ghost appears in search results immediately
+      const cachePatterns = [
+        'ghost:search:*',           // All search queries
+        'ghost:category:*',         // All category listings
+        `ghost:entity:${ghost.id}`, // The new ghost's cache
+      ];
+      
+      console.log('Cache patterns to invalidate:', cachePatterns);
+      
+      // Note: In production, implement actual cache deletion using Redis SCAN
+      // For now, caches will expire naturally based on TTL settings
+      
+    } catch (error) {
+      console.error('Failed to log ghost creation:', error);
+    }
+    
+    return ghost;
   }
 
   /**

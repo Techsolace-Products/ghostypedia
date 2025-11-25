@@ -100,6 +100,8 @@ export const corsMiddleware = cors({
     'Authorization',
     'X-Requested-With',
     'X-Request-ID',
+    'Cache-Control',
+    'Pragma',
   ],
   exposedHeaders: [
     'X-RateLimit-Limit',

@@ -18,6 +18,8 @@ export class ApiClient {
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
     };
 
     if (token) {
@@ -26,6 +28,7 @@ export class ApiClient {
 
     const config: RequestInit = {
       ...options,
+      cache: 'no-store',
       headers: {
         ...headers,
         ...(options.headers as Record<string, string>),

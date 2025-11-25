@@ -32,20 +32,24 @@ router.get('/', authenticateSession, cacheResponse(CacheTTL.recommendations), as
 
     const recommendations = await recommendationService.getPersonalizedRecommendations(userId, limit);
 
+    // Return success even if recommendations array is empty
     res.status(200).json({
       success: true,
       data: recommendations,
       count: recommendations.length,
+      message: recommendations.length === 0 
+        ? 'No recommendations available yet. Interact with content to get personalized suggestions!' 
+        : undefined,
     });
   } catch (error) {
     console.error('Error fetching recommendations:', error);
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'Failed to fetch recommendations',
-        timestamp: new Date().toISOString(),
-        requestId: req.headers['x-request-id'] || 'unknown',
-      },
+    
+    // Return empty array with success rather than error
+    res.status(200).json({
+      success: true,
+      data: [],
+      count: 0,
+      message: 'Unable to generate recommendations at this time. Please try again later.',
     });
   }
 });

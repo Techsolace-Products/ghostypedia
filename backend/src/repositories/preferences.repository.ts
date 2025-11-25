@@ -25,6 +25,7 @@ export interface PreferencesRepository {
   findByUserId(userId: string): Promise<PreferenceProfile | null>;
   create(userId: string): Promise<PreferenceProfile>;
   update(userId: string, updates: PreferenceProfileUpdate): Promise<PreferenceProfile>;
+  addCulturalInterests(userId: string, interests: string[]): Promise<PreferenceProfile>;
 }
 
 class PreferencesRepositoryImpl implements PreferencesRepository {
@@ -136,6 +137,24 @@ class PreferencesRepositoryImpl implements PreferencesRepository {
     }
 
     return result.rows[0];
+  }
+
+  /**
+   * Add cultural interests to user preferences (merge with existing)
+   */
+  async addCulturalInterests(userId: string, interests: string[]): Promise<PreferenceProfile> {
+    // Ensure preferences exist
+    let preferences = await this.findByUserId(userId);
+    if (!preferences) {
+      preferences = await this.create(userId);
+    }
+
+    // Merge new interests with existing ones (remove duplicates)
+    const existingInterests = preferences.culturalInterests || [];
+    const uniqueInterests = Array.from(new Set([...existingInterests, ...interests]));
+
+    // Update preferences
+    return this.update(userId, { culturalInterests: uniqueInterests });
   }
 }
 
