@@ -466,7 +466,7 @@ export default function App() {
 
       {/* --- SIDEBAR NAVIGATION --- */}
       <nav className="fixed left-0 top-0 bottom-0 w-20 bg-black/80 backdrop-blur-md border-r border-white/10 z-[100] hidden md:flex flex-col items-center py-10 justify-between">
-        <Ghost className="w-8 h-8 text-white animate-pulse" />
+        <Ghost className="w-8 h-8 text-white" />
         
         <div className="flex flex-col gap-8 items-center">
             {['hero', 'about', 'ghosts', 'team'].map((item) => (
