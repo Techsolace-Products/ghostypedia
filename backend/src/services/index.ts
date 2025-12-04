@@ -16,6 +16,8 @@ export type {
   AIDigitalTwinRequest, 
   AIDigitalTwinResponse 
 } from './ai-client.service';
+export { imagekitService, ImageKitService } from './imagekit.service';
+export type { ImageUploadOptions, ImageTransformOptions } from './imagekit.service';
 export type { ReadingProgress } from '../repositories/reading-progress.repository';
 export type { Story } from '../repositories/story.repository';
 export type { Bookmark, BookmarkWithMetadata, ContentType } from '../repositories/bookmark.repository';

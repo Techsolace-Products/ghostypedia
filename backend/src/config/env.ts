@@ -60,4 +60,10 @@ export const config = {
   logging: {
     level: process.env.LOG_LEVEL || 'info',
   },
+  
+  imagekit: {
+    publicKey: process.env.IMAGEKIT_PUBLIC_KEY || '',
+    privateKey: process.env.IMAGEKIT_PRIVATE_KEY || '',
+    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || '',
+  },
 };
