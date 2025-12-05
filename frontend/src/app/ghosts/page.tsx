@@ -150,6 +150,61 @@ export default function GhostsPage() {
     }
   }, [selectedIndex, ghosts.length]);
 
+  // Wheel scroll navigation
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (isDetailsOpen || ghosts.length === 0) return;
+      
+      e.preventDefault();
+      
+      const now = Date.now();
+      if (now - lastNavTime.current < 150) return;
+      
+      if (e.deltaY > 0) {
+        // Scroll down = next ghost
+        setSelectedIndex(prev => Math.min(ghosts.length - 1, prev + 1));
+      } else if (e.deltaY < 0) {
+        // Scroll up = previous ghost
+        setSelectedIndex(prev => Math.max(0, prev - 1));
+      }
+      lastNavTime.current = now;
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [isDetailsOpen, ghosts.length]);
+
+  // Keyboard arrow navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isDetailsOpen || ghosts.length === 0) return;
+      
+      const now = Date.now();
+      if (now - lastNavTime.current < 150) return;
+      
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.min(ghosts.length - 1, prev + 1));
+        lastNavTime.current = now;
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex(prev => Math.max(0, prev - 1));
+        lastNavTime.current = now;
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        setIsDetailsOpen(true);
+        lastNavTime.current = now;
+      } else if (e.key === "Escape" && isDetailsOpen) {
+        e.preventDefault();
+        setIsDetailsOpen(false);
+        lastNavTime.current = now;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDetailsOpen, ghosts.length]);
+
   const filteredGhosts = ghosts.filter(ghost =>
     ghost.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     ghost.type.toLowerCase().includes(searchQuery.toLowerCase())
@@ -211,9 +266,16 @@ export default function GhostsPage() {
             <span className="text-2xl font-['Oswald'] font-bold tracking-tighter text-white group-hover:text-red-500 transition-colors">GHOSTPEDIA</span>
           </Link>
           <div className="h-8 w-[1px] bg-white/10 hidden md:block" />
-          <div className="hidden md:flex gap-8 text-xs font-mono tracking-[0.2em] text-gray-500">
-            <span className="text-white">Archive //</span>
-            <span className="text-gray-500">{filteredGhosts.length} ENTITIES</span>
+          {/* Navigation Links */}
+          <div className="hidden md:flex gap-6 text-xs font-mono tracking-[0.2em]">
+            <span className="text-white border-b border-red-500 pb-1">ARCHIVE</span>
+            <Link href="/stories" className="text-gray-500 hover:text-white transition-colors">STORIES</Link>
+            {isAuthenticated && (
+              <>
+                <Link href="/bookmarks" className="text-gray-500 hover:text-white transition-colors">BOOKMARKS</Link>
+                <Link href="/recommendations" className="text-gray-500 hover:text-white transition-colors">FOR_YOU</Link>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4">

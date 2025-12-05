@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { ChevronLeft, Settings, Bell, Ghost, Sparkles, Save, Check } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { userApi, type UserPreferences } from '@/lib/api';
+import { userApi, type UserPreferencesFlat } from '@/lib/api';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import Link from 'next/link';
 
@@ -101,7 +101,7 @@ const ToggleSwitch = ({ checked, onChange, label }: { checked: boolean; onChange
 
 function PreferencesContent() {
   const { user, isLoading: authLoading } = useAuth();
-  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [preferences, setPreferences] = useState<UserPreferencesFlat | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
