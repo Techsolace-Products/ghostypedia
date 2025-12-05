@@ -1,10 +1,76 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, useInView } from 'framer-motion';
+import { ChevronLeft, Plus, Skull, AlertTriangle, Globe, Sparkles, Image, Dice6, X } from 'lucide-react';
 import { ghostsApi, type CreateGhostData } from '@/lib/api';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import Link from 'next/link';
+
+const SectionHeader = ({ title, sub }: { title: string; sub: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true });
+  return (
+    <div ref={ref} className="mb-8 border-l-4 border-white/20 pl-6">
+      <motion.h1
+        initial={{ x: -20, opacity: 0 }}
+        animate={isInView ? { x: 0, opacity: 1 } : {}}
+        className="text-4xl md:text-6xl font-['Oswald'] font-bold uppercase tracking-tighter text-white"
+      >
+        {title}
+      </motion.h1>
+      <motion.p
+        initial={{ x: -20, opacity: 0 }}
+        animate={isInView ? { x: 0, opacity: 1 } : {}}
+        transition={{ delay: 0.2 }}
+        className="font-mono text-gray-400 mt-2 tracking-widest text-sm"
+      >
+        // {sub}
+      </motion.p>
+    </div>
+  );
+};
+
+const FormSection = ({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) => (
+  <div className="border border-white/10 bg-black/30 p-6 md:p-8 space-y-6">
+    <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+      <Icon size={20} className="text-red-500" />
+      <h2 className="font-['Oswald'] text-xl uppercase tracking-wider">{title}</h2>
+    </div>
+    {children}
+  </div>
+);
+
+const DangerMeter = ({ level, onChange }: { level: number; onChange: (level: number) => void }) => {
+  const labels = ['HARMLESS', 'LOW', 'MODERATE', 'HIGH', 'EXTREME'];
+  const colors = ['text-green-500', 'text-yellow-500', 'text-orange-500', 'text-red-500', 'text-red-700'];
+  
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-sm text-gray-400 tracking-wider">THREAT_LEVEL:</span>
+        <span className={`font-mono text-lg font-bold ${colors[level - 1]}`}>
+          {level} - {labels[level - 1]}
+        </span>
+      </div>
+      <div className="flex gap-2">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onChange(i)}
+            className={`flex-1 h-8 transition-all ${
+              i <= level 
+                ? i <= 2 ? 'bg-green-500' : i <= 3 ? 'bg-yellow-500' : i <= 4 ? 'bg-red-500' : 'bg-red-700'
+                : 'bg-white/10 hover:bg-white/20'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 function CreateGhostContent() {
   const router = useRouter();
@@ -28,7 +94,6 @@ function CreateGhostContent() {
     
     try {
       setCreating(true);
-      
       const data: CreateGhostData = {
         ...formData,
         characteristics: formData.characteristics?.length ? formData.characteristics : [],
@@ -36,15 +101,11 @@ function CreateGhostContent() {
       };
 
       const response = await ghostsApi.create(data);
-      
-      // Show success message
-      alert(response.message || 'Ghost created successfully!');
-      
-      // Redirect to ghosts list
+      alert(response.message || 'Entity cataloged successfully!');
       router.push('/ghosts');
     } catch (error) {
       console.error('Failed to create ghost:', error);
-      alert('Failed to create ghost. Please try again.');
+      alert('Failed to catalog entity. Please try again.');
     } finally {
       setCreating(false);
     }
@@ -62,220 +123,198 @@ function CreateGhostContent() {
       tags: ['irish', 'celtic', 'death', 'folklore'],
       imageUrl: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=400',
     });
-    setTagInput('');
-    setCharInput('');
+  };
+
+  const addTag = (value: string, field: 'tags' | 'characteristics') => {
+    if (value.trim()) {
+      setFormData({
+        ...formData,
+        [field]: [...(formData[field] || []), value.trim()]
+      });
+      if (field === 'tags') setTagInput('');
+      else setCharInput('');
+    }
+  };
+
+  const removeTag = (index: number, field: 'tags' | 'characteristics') => {
+    setFormData({
+      ...formData,
+      [field]: formData[field]?.filter((_, i) => i !== index)
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-[#050505] text-white font-sans">
+      {/* Global Styles */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200;400;700&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
+      `}</style>
+
+      {/* Cinematic Overlay */}
+      <div className="fixed inset-0 pointer-events-none z-[50]">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-[0.02]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] opacity-[0.1]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,#000000_100%)] opacity-60" />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-6 md:px-12 py-12">
+        {/* Back Navigation */}
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-gray-400 hover:text-white font-mono text-sm tracking-widest mb-8 transition-colors group"
+        >
+          <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          RETURN_TO_HQ
+        </Link>
+
         {/* Header */}
-        <div className="mb-8">
-          <Link 
-            href="/ghosts"
-            className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-4"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Ghosts
-          </Link>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+          <SectionHeader title="New Entity" sub="CATALOG_NEW_PARANORMAL_SUBJECT" />
           
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
-                <span className="text-5xl">👻</span>
-                Create New Ghost
-              </h1>
-              <p className="text-gray-600 mt-2">Add a new paranormal entity to the encyclopedia</p>
-            </div>
-            <button
-              type="button"
-              onClick={fillSampleData}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-all flex items-center gap-2"
-            >
-              <span>🎲</span>
-              Fill Sample Data
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={fillSampleData}
+            className="flex items-center gap-2 px-4 py-2 border border-white/20 bg-white/5 font-mono text-sm tracking-widest hover:bg-white/10 transition-all self-start"
+          >
+            <Dice6 size={14} />
+            SAMPLE_DATA
+          </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleCreateGhost} className="space-y-6">
           {/* Basic Information */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2 border-b pb-4">
-              <span className="text-2xl">📝</span>
-              Basic Information
-            </h2>
-            
+          <FormSection icon={Skull} title="Entity Identification">
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Ghost Name <span className="text-red-500">*</span>
+                <label className="block font-mono text-xs text-gray-500 tracking-widest mb-2">
+                  ENTITY_NAME <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-900"
-                  placeholder="e.g., Banshee, Poltergeist, Yurei"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 font-['Rajdhani'] text-lg tracking-wide placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 focus:bg-white/10 transition-all"
+                  placeholder="e.g., Banshee, Poltergeist"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Entity Type <span className="text-red-500">*</span>
+                <label className="block font-mono text-xs text-gray-500 tracking-widest mb-2">
+                  ENTITY_TYPE <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-900"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 font-['Rajdhani'] text-lg tracking-wide placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 focus:bg-white/10 transition-all"
                   placeholder="e.g., spirit, demon, yokai"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Description <span className="text-red-500">*</span>
+              <label className="block font-mono text-xs text-gray-500 tracking-widest mb-2">
+                DESCRIPTION <span className="text-red-500">*</span>
               </label>
               <textarea
                 required
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={5}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all resize-none text-gray-900"
-                placeholder="Provide a detailed description..."
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 font-['Rajdhani'] tracking-wide placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 focus:bg-white/10 transition-all resize-none"
+                placeholder="Detailed description of the entity..."
               />
-              <p className="text-xs text-gray-500 mt-1">{formData.description.length} characters</p>
+              <p className="font-mono text-xs text-gray-600 mt-2">
+                CHAR_COUNT: <span className="text-gray-400">{formData.description.length}</span>
+              </p>
             </div>
-          </div>
+          </FormSection>
 
           {/* Cultural Background */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2 border-b pb-4">
-              <span className="text-2xl">🌍</span>
-              Cultural Background
-            </h2>
-            
+          <FormSection icon={Globe} title="Cultural Origin">
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Origin</label>
+                <label className="block font-mono text-xs text-gray-500 tracking-widest mb-2">
+                  ORIGIN
+                </label>
                 <input
                   type="text"
                   value={formData.origin}
                   onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-900"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 font-['Rajdhani'] text-lg tracking-wide placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 focus:bg-white/10 transition-all"
                   placeholder="e.g., Irish mythology"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Cultural Context</label>
+                <label className="block font-mono text-xs text-gray-500 tracking-widest mb-2">
+                  CULTURAL_CONTEXT
+                </label>
                 <input
                   type="text"
                   value={formData.culturalContext}
                   onChange={(e) => setFormData({ ...formData, culturalContext: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-900"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 font-['Rajdhani'] text-lg tracking-wide placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 focus:bg-white/10 transition-all"
                   placeholder="e.g., Celtic, Japanese"
                 />
               </div>
             </div>
-          </div>
+          </FormSection>
 
           {/* Danger Level */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2 border-b pb-4">
-              <span className="text-2xl">⚠️</span>
-              Threat Assessment
-            </h2>
-            
-            <div className="bg-gradient-to-r from-green-50 to-red-50 p-6 rounded-xl">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                Danger Level: <span className="text-3xl font-bold text-purple-600">{formData.dangerLevel}</span>
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="5"
-                value={formData.dangerLevel}
-                onChange={(e) => setFormData({ ...formData, dangerLevel: parseInt(e.target.value) })}
-                className="w-full h-3 rounded-lg appearance-none cursor-pointer"
-              />
-              <div className="flex justify-between text-sm font-medium mt-3">
-                <span className="text-green-600">😊 Harmless</span>
-                <span className="text-yellow-600">😐 Moderate</span>
-                <span className="text-red-600">😱 Terrifying</span>
-              </div>
-            </div>
-          </div>
+          <FormSection icon={AlertTriangle} title="Threat Assessment">
+            <DangerMeter
+              level={formData.dangerLevel || 3}
+              onChange={(level) => setFormData({ ...formData, dangerLevel: level })}
+            />
+          </FormSection>
 
           {/* Attributes & Tags */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2 border-b pb-4">
-              <span className="text-2xl">✨</span>
-              Attributes & Tags
-            </h2>
-            
+          <FormSection icon={Sparkles} title="Attributes & Classification">
             {/* Characteristics */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Characteristics</label>
+              <label className="block font-mono text-xs text-gray-500 tracking-widest mb-2">
+                CHARACTERISTICS
+              </label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={charInput}
                   onChange={(e) => setCharInput(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      if (charInput.trim()) {
-                        setFormData({
-                          ...formData,
-                          characteristics: [...(formData.characteristics || []), charInput.trim()]
-                        });
-                        setCharInput('');
-                      }
+                      addTag(charInput, 'characteristics');
                     }
                   }}
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-900"
-                  placeholder="e.g., wailing, omen of death"
+                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 font-['Rajdhani'] tracking-wide placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 focus:bg-white/10 transition-all"
+                  placeholder="e.g., wailing, translucent"
                 />
                 <button
                   type="button"
-                  onClick={() => {
-                    if (charInput.trim()) {
-                      setFormData({
-                        ...formData,
-                        characteristics: [...(formData.characteristics || []), charInput.trim()]
-                      });
-                      setCharInput('');
-                    }
-                  }}
-                  className="px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-all"
+                  onClick={() => addTag(charInput, 'characteristics')}
+                  className="px-6 py-3 bg-white text-black font-mono text-sm tracking-widest hover:bg-gray-200 transition-all"
                 >
-                  Add
+                  ADD
                 </button>
               </div>
               {formData.characteristics && formData.characteristics.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="flex flex-wrap gap-2 mt-4">
                   {formData.characteristics.map((char, idx) => (
-                    <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium flex items-center gap-2">
+                    <span
+                      key={idx}
+                      className="flex items-center gap-2 px-3 py-1 bg-red-900/30 border border-red-500/30 text-sm font-mono text-red-400"
+                    >
                       {char}
                       <button
                         type="button"
-                        onClick={() => {
-                          setFormData({
-                            ...formData,
-                            characteristics: formData.characteristics?.filter((_, i) => i !== idx)
-                          });
-                        }}
-                        className="text-purple-500 hover:text-purple-700 font-bold"
+                        onClick={() => removeTag(idx, 'characteristics')}
+                        className="hover:text-white transition-colors"
                       >
-                        ×
+                        <X size={12} />
                       </button>
                     </span>
                   ))}
@@ -285,86 +324,63 @@ function CreateGhostContent() {
 
             {/* Tags */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Tags (Added to your preferences)
+              <label className="block font-mono text-xs text-gray-500 tracking-widest mb-2">
+                CLASSIFICATION_TAGS
               </label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
-                      if (tagInput.trim()) {
-                        setFormData({
-                          ...formData,
-                          tags: [...(formData.tags || []), tagInput.trim()]
-                        });
-                        setTagInput('');
-                      }
+                      addTag(tagInput, 'tags');
                     }
                   }}
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900"
-                  placeholder="e.g., irish, celtic, folklore"
+                  className="flex-1 px-4 py-3 bg-white/5 border border-white/10 font-['Rajdhani'] tracking-wide placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 focus:bg-white/10 transition-all"
+                  placeholder="e.g., irish, folklore"
                 />
                 <button
                   type="button"
-                  onClick={() => {
-                    if (tagInput.trim()) {
-                      setFormData({
-                        ...formData,
-                        tags: [...(formData.tags || []), tagInput.trim()]
-                      });
-                      setTagInput('');
-                    }
-                  }}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all"
+                  onClick={() => addTag(tagInput, 'tags')}
+                  className="px-6 py-3 bg-white/10 border border-white/20 font-mono text-sm tracking-widest hover:bg-white/20 transition-all"
                 >
-                  Add
+                  ADD
                 </button>
               </div>
-              <p className="text-xs text-blue-600 mt-1 font-medium">
-                🎯 These tags improve your recommendations!
+              <p className="font-mono text-xs text-gray-600 mt-2">
+                // TAGS_IMPROVE_RECOMMENDATIONS
               </p>
               {formData.tags && formData.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="flex flex-wrap gap-2 mt-4">
                   {formData.tags.map((tag, idx) => (
-                    <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-2">
+                    <span
+                      key={idx}
+                      className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 text-sm font-mono text-gray-400"
+                    >
                       #{tag}
                       <button
                         type="button"
-                        onClick={() => {
-                          setFormData({
-                            ...formData,
-                            tags: formData.tags?.filter((_, i) => i !== idx)
-                          });
-                        }}
-                        className="text-blue-500 hover:text-blue-700 font-bold"
+                        onClick={() => removeTag(idx, 'tags')}
+                        className="hover:text-white transition-colors"
                       >
-                        ×
+                        <X size={12} />
                       </button>
                     </span>
                   ))}
                 </div>
               )}
             </div>
-          </div>
+          </FormSection>
 
           {/* Image */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2 border-b pb-4">
-              <span className="text-2xl">🖼️</span>
-              Visual Media
-            </h2>
-            
-            <div className="flex gap-3 mb-3">
+          <FormSection icon={Image} title="Visual Documentation">
+            <div className="flex gap-3 mb-4">
               <label className="flex-1 cursor-pointer">
-                <div className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Upload Image
+                <div className="flex items-center justify-center gap-2 px-4 py-3 bg-white text-black font-mono text-sm tracking-widest hover:bg-gray-200 transition-all">
+                  <Image size={16} />
+                  UPLOAD_IMAGE
                 </div>
                 <input
                   type="file"
@@ -391,12 +407,11 @@ function CreateGhostContent() {
                     'https://images.unsplash.com/photo-1603899122634-f086ca5f5ddd?w=400',
                     'https://images.unsplash.com/photo-1635863138275-d9b33299680b?w=400',
                   ];
-                  const randomImage = randomImages[Math.floor(Math.random() * randomImages.length)];
-                  setFormData({ ...formData, imageUrl: randomImage });
+                  setFormData({ ...formData, imageUrl: randomImages[Math.floor(Math.random() * randomImages.length)] });
                 }}
-                className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all"
+                className="px-6 py-3 border border-white/20 bg-white/5 font-mono text-sm tracking-widest hover:bg-white/10 transition-all"
               >
-                🎲 Random
+                <Dice6 size={16} />
               </button>
             </div>
 
@@ -404,52 +419,52 @@ function CreateGhostContent() {
               type="url"
               value={formData.imageUrl}
               onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-gray-900"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 font-mono text-sm tracking-wide placeholder:text-gray-600 focus:outline-none focus:border-red-500/50 focus:bg-white/10 transition-all"
               placeholder="Or paste image URL..."
             />
 
             {formData.imageUrl && (
-              <div className="mt-4 p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl">
-                <p className="text-sm font-semibold text-gray-700 mb-3">Preview:</p>
-                <img 
-                  src={formData.imageUrl} 
-                  alt="Preview" 
-                  className="w-full h-64 object-cover rounded-lg shadow-lg"
-                  onError={(e) => {
-                    e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EImage Failed%3C/text%3E%3C/svg%3E';
-                  }}
-                />
+              <div className="mt-6 border border-white/10 p-4">
+                <p className="font-mono text-xs text-gray-500 tracking-widest mb-4">PREVIEW:</p>
+                <div className="relative">
+                  <img 
+                    src={formData.imageUrl} 
+                    alt="Preview" 
+                    className="w-full h-64 object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                    onError={(e) => {
+                      e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23111" width="400" height="300"/%3E%3Ctext fill="%23444" x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-family="monospace"%3EIMAGE_FAILED%3C/text%3E%3C/svg%3E';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                </div>
               </div>
             )}
-          </div>
+          </FormSection>
 
           {/* Submit Buttons */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 pt-6">
             <button
               type="submit"
               disabled={creating}
-              className="flex-1 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-bold text-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-3"
+              className="flex-1 flex items-center justify-center gap-3 px-8 py-4 bg-white text-black font-mono font-bold tracking-widest hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {creating ? (
                 <>
-                  <svg className="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Creating Ghost...
+                  <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  CATALOGING...
                 </>
               ) : (
                 <>
-                  <span className="text-2xl">👻</span>
-                  Create Ghost Entity
+                  <Plus size={18} />
+                  CATALOG_ENTITY
                 </>
               )}
             </button>
             <Link
               href="/ghosts"
-              className="px-8 py-4 bg-gray-200 text-gray-700 rounded-xl font-bold text-lg hover:bg-gray-300 transition-all flex items-center justify-center"
+              className="px-8 py-4 border border-white/20 bg-white/5 font-mono tracking-widest hover:bg-white/10 transition-all flex items-center justify-center"
             >
-              Cancel
+              CANCEL
             </Link>
           </div>
         </form>

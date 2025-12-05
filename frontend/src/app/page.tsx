@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   motion,
   useScroll,
@@ -9,10 +9,16 @@ import {
   AnimatePresence
 } from "framer-motion";
 import {
-  Activity, Globe, Cpu, Ghost, Fingerprint,
-  ArrowDown, ChevronRight, Lock, User, Key, X,
-  Radio, Gamepad2
+  Activity, Cpu, Ghost, Fingerprint,
+  ArrowDown, ChevronRight, Lock, X,
+  Radio, Gamepad2, UserPlus, KeyRound, User, LogOut,
+  BookOpen, Bookmark, Sparkles, Settings
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
+import { useAuth } from "@/hooks/useAuth";
 
 // --- ASSETS & DATA ---
 const GHOSTS = [
@@ -101,7 +107,33 @@ const SectionHeader = ({ title, sub }: { title: string; sub: string }) => {
   );
 };
 
-const LoginModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+type AuthTab = 'login' | 'register' | 'reset';
+
+const AuthModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const [activeTab, setActiveTab] = useState<AuthTab>('login');
+
+  const tabs = [
+    { id: 'login' as AuthTab, label: 'LOGIN', icon: Lock },
+    { id: 'register' as AuthTab, label: 'REGISTER', icon: UserPlus },
+    { id: 'reset' as AuthTab, label: 'RESET', icon: KeyRound },
+  ];
+
+  const getTitle = () => {
+    switch (activeTab) {
+      case 'login': return 'Agent Authentication';
+      case 'register': return 'New Agent Registration';
+      case 'reset': return 'Password Recovery';
+    }
+  };
+
+  const getSubtitle = () => {
+    switch (activeTab) {
+      case 'login': return 'SECURE_LOGIN_REQUIRED';
+      case 'register': return 'CREATE_NEW_IDENTITY';
+      case 'reset': return 'RECOVER_ACCESS_CODES';
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -110,50 +142,120 @@ const LoginModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={(e) => e.target === e.currentTarget && onClose()}
         >
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="w-full max-w-md bg-black border border-white/20 p-8 relative shadow-[0_0_50px_rgba(255,0,0,0.1)]"
+            className="w-full max-w-md bg-black border border-white/20 relative shadow-[0_0_50px_rgba(255,0,0,0.1)]"
           >
-            <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white focus:text-red-500 focus:outline-none transition-colors">
+            {/* Close Button */}
+            <button 
+              onClick={onClose} 
+              className="absolute top-4 right-4 text-gray-500 hover:text-white focus:text-red-500 focus:outline-none transition-colors z-10"
+            >
               <X size={24} />
             </button>
 
-            <div className="flex items-center gap-2 mb-8 justify-center text-red-500">
-              <Lock size={16} />
-              <span className="font-mono text-xs tracking-widest">SECURE_LOGIN_REQUIRED</span>
+            {/* Tab Navigation */}
+            <div className="flex border-b border-white/10">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 py-4 px-4 font-mono text-xs tracking-widest transition-all flex items-center justify-center gap-2 ${
+                    activeTab === tab.id
+                      ? 'bg-white/10 text-white border-b-2 border-red-500'
+                      : 'text-gray-500 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <tab.icon size={14} />
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <h2 className="text-3xl font-['Oswald'] font-bold text-center mb-8 uppercase text-white">Agent Authentication</h2>
-
-            <form className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs font-mono text-gray-500 block">AGENT_ID</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-3 text-gray-500" size={16} />
-                  <input type="text" className="w-full bg-white/5 border border-white/10 p-3 pl-10 text-white focus:border-red-500 focus:outline-none transition-colors font-mono focus:bg-white/10" placeholder="ID-XXXX" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-mono text-gray-500 block">PASSCODE</label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-3 text-gray-500" size={16} />
-                  <input type="password" className="w-full bg-white/5 border border-white/10 p-3 pl-10 text-white focus:border-red-500 focus:outline-none transition-colors font-mono focus:bg-white/10" placeholder="••••••••" />
-                </div>
+            {/* Content */}
+            <div className="p-8">
+              <div className="flex items-center gap-2 mb-6 justify-center text-red-500">
+                <Lock size={16} />
+                <span className="font-mono text-xs tracking-widest">{getSubtitle()}</span>
               </div>
 
-              <button type="button" className="w-full bg-white text-black font-bold py-4 hover:bg-gray-200 focus:bg-red-600 focus:text-white transition-colors uppercase tracking-widest text-sm mt-4 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black">
-                Authenticate
-              </button>
+              <h2 className="text-2xl font-['Oswald'] font-bold text-center mb-8 uppercase text-white">
+                {getTitle()}
+              </h2>
 
-              <div className="flex justify-center mt-4">
+              {/* Auth Forms with custom styling wrapper */}
+              <div className="auth-form-dark">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {activeTab === 'login' && <LoginForm />}
+                    {activeTab === 'register' && <RegisterForm />}
+                    {activeTab === 'reset' && <ResetPasswordForm />}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Footer Links */}
+              <div className="mt-6 text-center space-y-2">
+                {activeTab === 'login' && (
+                  <>
+                    <button
+                      onClick={() => setActiveTab('reset')}
+                      className="text-xs text-gray-500 hover:text-red-500 font-mono transition-colors"
+                    >
+                      FORGOT_PASSCODE?
+                    </button>
+                    <div className="text-xs text-gray-600 font-mono">
+                      NO_IDENTITY? {' '}
+                      <button
+                        onClick={() => setActiveTab('register')}
+                        className="text-white hover:text-red-500 transition-colors"
+                      >
+                        CREATE_ONE
+                      </button>
+                    </div>
+                  </>
+                )}
+                {activeTab === 'register' && (
+                  <div className="text-xs text-gray-600 font-mono">
+                    EXISTING_AGENT? {' '}
+                    <button
+                      onClick={() => setActiveTab('login')}
+                      className="text-white hover:text-red-500 transition-colors"
+                    >
+                      AUTHENTICATE
+                    </button>
+                  </div>
+                )}
+                {activeTab === 'reset' && (
+                  <div className="text-xs text-gray-600 font-mono">
+                    REMEMBER_CODES? {' '}
+                    <button
+                      onClick={() => setActiveTab('login')}
+                      className="text-white hover:text-red-500 transition-colors"
+                    >
+                      RETURN_TO_LOGIN
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Gamepad hint */}
+              <div className="flex justify-center mt-6">
                 <span className="text-[10px] text-gray-600 font-mono flex items-center gap-2">
                   PRESS <span className="border border-gray-600 rounded-full w-4 h-4 flex items-center justify-center text-[8px] text-red-500">B</span> TO CANCEL
                 </span>
               </div>
-            </form>
+            </div>
           </motion.div>
         </motion.div>
       )}
@@ -164,6 +266,9 @@ const LoginModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
 // --- MAIN PAGE ---
 
 export default function App() {
+  const router = useRouter();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  
   const [activeSection, setActiveSection] = useState("hero");
   const [isBooted, setIsBooted] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -177,6 +282,11 @@ export default function App() {
 
   // --- GAMEPAD HOOK INTEGRATION ---
   const { isConnected: isControllerActive, cursorPos } = useGamepad(isLoginOpen, () => setIsLoginOpen(false));
+
+  // Handle logout
+  const handleLogout = async () => {
+    await logout();
+  };
 
   useEffect(() => {
     // Boot Timer
@@ -256,9 +366,54 @@ export default function App() {
             transform: scale(1.02);
             transition: all 0.15s ease;
         }
+
+        /* Dark theme for auth forms */
+        .auth-form-dark input {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+        }
+        .auth-form-dark input:focus {
+            border-color: #ef4444 !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+        .auth-form-dark input::placeholder {
+            color: rgba(255, 255, 255, 0.4) !important;
+        }
+        .auth-form-dark label {
+            color: rgba(255, 255, 255, 0.6) !important;
+            font-family: monospace !important;
+            text-transform: uppercase !important;
+            font-size: 10px !important;
+            letter-spacing: 0.1em !important;
+        }
+        .auth-form-dark button[type="submit"] {
+            background: white !important;
+            color: black !important;
+            font-family: monospace !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.1em !important;
+        }
+        .auth-form-dark button[type="submit"]:hover {
+            background: #e5e5e5 !important;
+        }
+        .auth-form-dark .bg-red-50 {
+            background: rgba(239, 68, 68, 0.1) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+        }
+        .auth-form-dark .text-red-600 {
+            color: #f87171 !important;
+        }
+        .auth-form-dark .bg-green-50 {
+            background: rgba(34, 197, 94, 0.1) !important;
+            border-color: rgba(34, 197, 94, 0.3) !important;
+        }
+        .auth-form-dark .text-green-600 {
+            color: #4ade80 !important;
+        }
       `}</style>
 
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      <AuthModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
 
       {/* --- VIRTUAL GAMEPAD CURSOR --- */}
       {isControllerActive && (
@@ -336,10 +491,111 @@ export default function App() {
           ))}
         </div>
 
-        <div className="flex flex-col gap-6 items-center">
-          <button onClick={() => setIsLoginOpen(true)} className="group relative focus:text-red-500 focus:outline-none">
-            <Lock size={16} className="text-gray-500 group-hover:text-white transition-colors" />
-          </button>
+        <div className="flex flex-col gap-4 items-center">
+          {isAuthenticated ? (
+            <>
+              {/* Archive Link */}
+              <button 
+                onClick={() => router.push('/ghosts')} 
+                className="group relative focus:text-red-500 focus:outline-none"
+                title="Ghost Archive"
+              >
+                <Ghost size={16} className="text-gray-500 group-hover:text-white transition-colors" />
+                <span className="absolute left-full ml-4 bg-white/10 px-2 py-1 text-[10px] font-mono tracking-widest backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  ARCHIVE
+                </span>
+              </button>
+              {/* Stories Link */}
+              <button 
+                onClick={() => router.push('/stories')} 
+                className="group relative focus:text-red-500 focus:outline-none"
+                title="Stories"
+              >
+                <BookOpen size={16} className="text-gray-500 group-hover:text-white transition-colors" />
+                <span className="absolute left-full ml-4 bg-white/10 px-2 py-1 text-[10px] font-mono tracking-widest backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  STORIES
+                </span>
+              </button>
+              {/* Bookmarks Link */}
+              <button 
+                onClick={() => router.push('/bookmarks')} 
+                className="group relative focus:text-red-500 focus:outline-none"
+                title="Bookmarks"
+              >
+                <Bookmark size={16} className="text-gray-500 group-hover:text-white transition-colors" />
+                <span className="absolute left-full ml-4 bg-white/10 px-2 py-1 text-[10px] font-mono tracking-widest backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  BOOKMARKS
+                </span>
+              </button>
+              {/* Recommendations Link */}
+              <button 
+                onClick={() => router.push('/recommendations')} 
+                className="group relative focus:text-red-500 focus:outline-none"
+                title="Recommendations"
+              >
+                <Sparkles size={16} className="text-gray-500 group-hover:text-white transition-colors" />
+                <span className="absolute left-full ml-4 bg-white/10 px-2 py-1 text-[10px] font-mono tracking-widest backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  FOR_YOU
+                </span>
+              </button>
+              {/* Divider */}
+              <div className="w-4 h-[1px] bg-white/20 my-1" />
+              {/* Preferences Link */}
+              <button 
+                onClick={() => router.push('/preferences')} 
+                className="group relative focus:text-red-500 focus:outline-none"
+                title="Preferences"
+              >
+                <Settings size={16} className="text-gray-500 group-hover:text-white transition-colors" />
+                <span className="absolute left-full ml-4 bg-white/10 px-2 py-1 text-[10px] font-mono tracking-widest backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  SETTINGS
+                </span>
+              </button>
+              {/* User Profile / Dashboard */}
+              <button 
+                onClick={() => router.push('/dashboard')} 
+                className="group relative focus:text-red-500 focus:outline-none"
+                title="Dashboard"
+              >
+                <User size={16} className="text-green-500 group-hover:text-white transition-colors" />
+                <span className="absolute left-full ml-4 bg-white/10 px-2 py-1 text-[10px] font-mono tracking-widest backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  DASHBOARD
+                </span>
+              </button>
+              {/* Logout */}
+              <button 
+                onClick={handleLogout} 
+                className="group relative focus:text-red-500 focus:outline-none"
+                title="Logout"
+              >
+                <LogOut size={16} className="text-gray-500 group-hover:text-red-500 transition-colors" />
+                <span className="absolute left-full ml-4 bg-white/10 px-2 py-1 text-[10px] font-mono tracking-widest backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  LOGOUT
+                </span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Archive Link (public) */}
+              <button 
+                onClick={() => router.push('/ghosts')} 
+                className="group relative focus:text-red-500 focus:outline-none"
+                title="Ghost Archive"
+              >
+                <Ghost size={16} className="text-gray-500 group-hover:text-white transition-colors" />
+                <span className="absolute left-full ml-4 bg-white/10 px-2 py-1 text-[10px] font-mono tracking-widest backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  ARCHIVE
+                </span>
+              </button>
+              {/* Login */}
+              <button onClick={() => setIsLoginOpen(true)} className="group relative focus:text-red-500 focus:outline-none">
+                <Lock size={16} className="text-gray-500 group-hover:text-white transition-colors" />
+                <span className="absolute left-full ml-4 bg-white/10 px-2 py-1 text-[10px] font-mono tracking-widest backdrop-blur opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  LOGIN
+                </span>
+              </button>
+            </>
+          )}
           <Activity size={16} className="text-green-500" />
         </div>
       </nav>
@@ -417,12 +673,22 @@ export default function App() {
               >
                 ACCESS_FILE <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
-              <button
-                onClick={() => setIsLoginOpen(true)}
-                className="flex items-center gap-3 px-8 py-4 border border-white/20 bg-black/50 backdrop-blur font-mono font-bold tracking-widest hover:bg-white/10 transition-all focus:bg-white focus:text-black focus:outline-none"
-              >
-                AGENT_LOGIN <Lock size={14} />
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="flex items-center gap-3 px-8 py-4 border border-green-500/50 bg-green-900/20 backdrop-blur font-mono font-bold tracking-widest hover:bg-green-900/40 transition-all focus:bg-green-600 focus:text-white focus:outline-none text-green-400"
+                >
+                  <User size={14} />
+                  {user?.username?.toUpperCase() || 'DASHBOARD'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsLoginOpen(true)}
+                  className="flex items-center gap-3 px-8 py-4 border border-white/20 bg-black/50 backdrop-blur font-mono font-bold tracking-widest hover:bg-white/10 transition-all focus:bg-white focus:text-black focus:outline-none"
+                >
+                  AGENT_LOGIN <Lock size={14} />
+                </button>
+              )}
             </div>
           </div>
 

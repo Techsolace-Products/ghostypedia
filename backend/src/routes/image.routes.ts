@@ -128,8 +128,51 @@ router.get('/auth', authenticateSession, (_req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/images/list
+ * List all images
+ */
+router.get('/list', authenticateSession, async (req: Request, res: Response) => {
+  try {
+    const { tags } = req.query;
+
+    const tagArray = tags ? (tags as string).split(',') : undefined;
+    const images = await imagekitService.listImages(undefined, tagArray);
+
+    res.json({
+      success: true,
+      data: images,
+    });
+  } catch (error) {
+    console.error('List images error:', error);
+    res.status(500).json({ error: 'Failed to list images' });
+  }
+});
+
+/**
+ * GET /api/images/list/:folder
+ * List images in a specific folder
+ */
+router.get('/list/:folder', authenticateSession, async (req: Request, res: Response) => {
+  try {
+    const { folder } = req.params;
+    const { tags } = req.query;
+
+    const tagArray = tags ? (tags as string).split(',') : undefined;
+    const images = await imagekitService.listImages(folder, tagArray);
+
+    res.json({
+      success: true,
+      data: images,
+    });
+  } catch (error) {
+    console.error('List images error:', error);
+    res.status(500).json({ error: 'Failed to list images' });
+  }
+});
+
+/**
  * GET /api/images/:fileId
- * Get image details
+ * Get image details (must be after /list routes to avoid conflicts)
  */
 router.get('/:fileId', authenticateSession, async (req: Request, res: Response) => {
   try {
@@ -162,28 +205,6 @@ router.delete('/:fileId', authenticateSession, async (req: Request, res: Respons
   } catch (error) {
     console.error('Delete image error:', error);
     res.status(500).json({ error: 'Failed to delete image' });
-  }
-});
-
-/**
- * GET /api/images/list/:folder?
- * List images in a folder
- */
-router.get('/list/:folder?', authenticateSession, async (req: Request, res: Response) => {
-  try {
-    const { folder } = req.params;
-    const { tags } = req.query;
-
-    const tagArray = tags ? (tags as string).split(',') : undefined;
-    const images = await imagekitService.listImages(folder, tagArray);
-
-    res.json({
-      success: true,
-      data: images,
-    });
-  } catch (error) {
-    console.error('List images error:', error);
-    res.status(500).json({ error: 'Failed to list images' });
   }
 });
 

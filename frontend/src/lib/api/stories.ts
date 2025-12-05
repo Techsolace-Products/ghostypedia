@@ -4,6 +4,7 @@ export interface Story {
   id: string;
   title: string;
   content: string;
+  ghostEntityId?: string;
   ghostEntityIds: string[];
   origin: string;
   culturalContext: string;
@@ -24,6 +25,15 @@ export interface ReadingProgress {
 }
 
 export const storiesApi = {
+  async getAll(): Promise<Story[]> {
+    try {
+      const response = await apiClient.get<Story[]>('/stories');
+      return response.data;
+    } catch {
+      return [];
+    }
+  },
+
   async getByGhost(ghostId: string): Promise<Story[]> {
     const response = await apiClient.get<Story[]>(`/stories/ghost/${ghostId}`);
     return response.data;

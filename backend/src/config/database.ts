@@ -10,7 +10,7 @@ const pool = new Pool({
   password: config.database.password,
   max: config.database.maxConnections,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Increased for Neon serverless cold starts
   ssl: config.nodeEnv === 'production' || config.database.host.includes('neon.tech') || config.database.host.includes('aws')
     ? { rejectUnauthorized: false }
     : false,
