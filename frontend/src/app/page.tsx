@@ -52,9 +52,9 @@ const GHOSTS = [
 ];
 
 const TEAM = [
-  { name: "DR. A. VANCE", role: "PARAPSYCHOLOGIST", status: "ACTIVE", img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=800&auto=format&fit=crop" },
-  { name: "AGENT K. ROOKE", role: "FIELD OPS", status: "MIA", img: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=800&auto=format&fit=crop" },
-  { name: "SYS_ADMIN_09", role: "CYBER SECURITY", status: "REMOTE", img: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=800&auto=format&fit=crop" },
+  { name: "ROHAN SIDHU", role: "DEVELOPER", status: "ACTIVE", img: "/team/1.png" },
+  { name: "SAMARTH MAHAPATRA", role: "DEVELOPER", status: "ACTIVE", img: "/team/2.png" },
+  { name: "PRANAV KUMAR", role: "DEVELOPER", status: "ACTIVE", img: "/team/3.png" },
 ];
 
 // --- UTILS ---
